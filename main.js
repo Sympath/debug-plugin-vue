@@ -1,7 +1,10 @@
 let VmDebugPlugin = {
   install(Vue){
     let vmMap = {}; // 实现$vm调试模式 用以保存vue实例的map
-    Vue.prototype.$message('VmDebugPlugin install success')
+    let hasElementUI = false; // 项目是否接入了elementUi
+    if(Vue.prototype.$msgbox) {
+      hasElementUI = true;
+    }
     initVmDebugPlugin(Vue)
     function initVmDebugPlugin(){
       let data = {
