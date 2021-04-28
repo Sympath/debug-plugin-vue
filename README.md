@@ -128,6 +128,39 @@ setVmInstance (vmKey = '',isPage = false) {
 
 至此，我们就可以快乐的抛弃`console.log`啦（至少别那么常见zzz）
 
+### 迭代
+##### 在mixin中定义setVmInstance 实现组件的订阅
+在需要调试的组件中调用`setVmInstance`，传入key，在window上会挂载`$vm${key}`的变量，指向当前组件的实例
+- 存在问题
+  - 每次要调用 代码侵入性太强、不便后人理解，而且麻烦
+  - window上全局变量太多
+  - vue实例无法被垃圾回收
+  - 需要记忆很多key
+  - mixin中代码污染
+###### mixin中定义setVm 实现在控制台中进行组件的切换 setVmInstance用于订阅 实现保存组件实例
+维护一个map数据结构，key为`setVmInstance`传入的key，值为组件实例，此为订阅；定义`setVm`函数，传入`key`则会在map上取出对应的实例，并将`$vm`指向此实例，此为发布；
+- 存在问题
+  - 每次要调用 代码侵入性太强、不便后人理解，而且麻烦
+  - vue实例无法被垃圾回收
+  - 需要记忆很多key
+  - mixin中代码污染
+
+- 解决问题
+  - window上全局变量太多  此时window只存在了两个变量，`setVm`和`$vm`
+
+##### 采用d_name进行setVmInstance的调用 从而避免暴露setVmInstance这个对内的接口;改写成插件形式,解耦合
+改写为插件形式，进行解耦合；在生命周期中进行判断，如果实例上有定义`d_name`，则进行订阅（调用setVmInstance），从而减少对外接口的显示调用
+- 存在问题
+  - 每次要调用 代码侵入性太强、不便后人理解，而且麻烦
+  - vue实例无法被垃圾回收
+  - 需要记忆很多key
+
+- 解决问题
+  - mixin中代码污染
+  - setVmInstance的对外暴露
+
+
+
 ### 待优化
 
 -  后期应该改为【API转发工具】的能力，点击按钮进行切换，将`setVm`这种内部API隐藏起来更友好。
