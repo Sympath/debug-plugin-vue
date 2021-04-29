@@ -9,10 +9,127 @@ Vue项目（如我司）经常会出现VueDevTool崩溃从而无法查看组件�
 ##### 解决后结果
 
 1. 在控制台可以直接用`$vm`查看当前页面的vue实例从而查看数据（顺带解决了VueDevTool层级很深很深的麻烦）
-2. 可以使用`setVm`切换`$vm`的指向，从而查看页面上指定的组件
-3. 兼容了微前端的场景，同样可以处理，只是子应用的挂载的变量是`$fVm`而已
+2. 可以任意切换当前页面已挂载的组件，查看和控制数据（这就意味着在测试环境我们可以直接看更改vue组件数据看效果了，避免本地改的情况）
+3. 兼容了微前端的场景
 
 ### 使用
+
+- options ： 配置项
+  - getMappWinodow 获取子应用的全局变量 （如果不需要承接微应用可以不传递）
+  - isDev  判断是否是开发环境 如果函数返回为true才接入插件（传入true也行）
+  - hasElementUI   项目是否接入了elementUi 
+
+##### 举例（例子仓库）
+
+###### 引入
+
+```js
+import vueDebugPluginFn from 'vue-debug-plugin';
+let vueDebugPlugin = vueDebugPluginFn({
+    getMappWinodow(vmMap){
+        // 如果存在且只存在微前端控制面板  且 子应用存在 则返回
+        if(vmMap.friday && Object.keys(vmMap).length == 1 && vmMap.friday.app){
+            return vmMap.friday.app.sandbox.proxy;
+        }
+    },
+    isDev(location){
+        let localIdentifyings = ['8082','test'];
+        let isDev = localIdentifyings.some(id => location.href.indexOf(id) !== -1)
+        return isDev
+    },
+    hasElementUI: true  // 项目是否接入了elementUi 
+    // isMapp: true 如果是子应用 需要设置为true
+})
+Vue.use(vueDebugPlugin)
+```
+###### 页面代码
+
+Home
+
+```vue
+<template>
+  <div class="home">
+     <h1>{{name}}</h1>
+     <w-dialog/>
+  </div>
+</template>
+
+<script>
+// @ is an alias to /src
+
+import wDialog from '../components/w-dialog';
+export default {
+  name: 'Home',
+  d_name: 'p_home',
+  components: {
+    wDialog
+  },
+  data(){
+    return {
+      name: '老妈身体健康'
+    }
+  }
+}
+</script>
+
+```
+
+其中组件代码
+
+```vue
+<template>
+  <div v-if="show" class="wrapper">
+      {{dianame}}
+  </div>
+</template>
+
+<script>
+export default {
+  d_name: 'dialog',
+  components: {},
+  props: {},
+  data() {
+    return {
+      dianame: '我是弹窗数据-小侄女越来越可爱',
+      show: false
+    };
+  }
+};
+</script>
+<style scoped>
+.wrapper{}
+</style>
+```
+
+###### About
+
+```vue
+<template>
+  <div class="about">
+    <h1>{{name}}</h1>
+  </div>
+</template>
+<script>
+export default {
+    d_name: 'p_about',
+    data(){
+      return {
+        name: '清哥新婚快乐！！'
+      }
+    }
+}
+</script>
+```
+
+###### 使用效果
+
+<video src="/Users/wzyan/Library/Containers/FN2V63AD2J.com.tencent.ScreenCapture2/Data/Downloads/QQ20210430-005315-HD.mp4"></video>
+
+
+
+
+
+### 实现逻辑大致讲解
 
 ##### 不涉及到微前端
 
