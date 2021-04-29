@@ -1,5 +1,5 @@
-import mappPluginFn from './mappPlugin';
-import vmPluginFn from './vmPlugin';
+import mappPluginFn from './src/mappPlugin';
+import vmPluginFn from './src/vmPlugin';
 import {callFn} from './util';
 
 // 用户传过来的配置项
@@ -18,6 +18,12 @@ export default  function pluginWrapper(options) {
     // 否则 加载主应用的插件
     else{
       return vmPluginFn(options)
+    }
+  }else {
+    return {
+      install(){
+
+      }
     }
   }
   

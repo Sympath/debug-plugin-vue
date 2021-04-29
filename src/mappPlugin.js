@@ -30,8 +30,6 @@ function pluginFn(options){
              * @param {*} isPage 是否为当前页面   从而实现  $vm默认指向当前页面
              */  
             setVmInstance (vmKey = '',isPage = false) {
-            
-
                 vmKey = vmKey ? vmKey : '$vm';
                 vmMap[`${vmKey}`] = this;
                 // 考虑到多个组件都可能注册了这个调试功能，假设是父子组件 根据生命周期就会导致$vm的指向出现问题 解决思路如下
@@ -52,14 +50,9 @@ function pluginFn(options){
 
   let VmDebugPlugin = {
       install(_Vue){
-       
-        // 只在本地开发的时候生效，避免污染线上
-        let isLocal = location.host.indexOf(8082) !== -1;
-        if(isLocal){
           Vue = _Vue
           window.vmMap = {}; // 实现$vm调试模式 用以保存vue实例的map
           initVmDebugPlugin(Vue)
-        }
       }
   }
   return VmDebugPlugin

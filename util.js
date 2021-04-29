@@ -51,7 +51,7 @@ export function typeCheck(type) {
 }
 export function callFn(fn,...params){
     let target = fn;
-	if(typeCheck('Function')) target = fn(...params)
+	if(typeCheck('Function')(target)) target = fn(...params)
     return target
 }
 function debounceAll(fnsMap,time = 300){
