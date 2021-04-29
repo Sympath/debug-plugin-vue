@@ -14,16 +14,6 @@ function pluginFn(options){
         showPhanel: false,// 控制是否显示面板
         notFirstRenderChooseBtn: false
     }
-    
-    // let hasElementUI = false; // 项目是否接入了elementUi
-    if(hasElementUI){
-      if(Vue.prototype.$msgbox) {
-        hasElementUI = false; // 避免用户搞错
-        notice('您没有接入elementUi哦,msgbox方法查找不到')
-      }
-    }
-   
-  
     importPlugin();
     renderVmDebugPlugin();
     function importPlugin(){
@@ -152,6 +142,13 @@ function pluginFn(options){
     // 需重写 以实现无elementUi 的情况
     // 渲染显示的面板
     function renderChoosePhanel(){
+      // let hasElementUI = false; // 项目是否接入了elementUi
+    if(hasElementUI){
+      if(!Vue.prototype.$msgbox) {
+        hasElementUI = false; // 避免用户搞错
+        notice('您没有接入elementUi哦,msgbox方法查找不到')
+      }
+    }
       // 保存createElement函数
       if(!h){
         h = vmMap._vm ? vmMap._vm.$createElement : ()=>{};
