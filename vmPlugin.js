@@ -1,5 +1,6 @@
 
 
+import {callFn} from './util';
 function pluginFn(options){
   let Vue;
   function initVmDebugPlugin(){
@@ -11,17 +12,16 @@ function pluginFn(options){
     let {
       getMappWinodow
     } = options;
-    // 待梳理 如何支持微应用控制面板的判断 从而接入微应用 w-todo
-    if(typeof getMappWinodow == 'function'){
-      try {
-        // 用户传递一个获取子应用全局变量的函数，会在执行时传递当前的组件Map，此函数中应判断如果符合子应用逻辑，则将vmMap交由子应用进行托管
-        let mappWinodow = getMappWinodow(vmMap);
-        if (mappWinodow && mappWinodow.vmMap) {
-            vmMap = mappWinodow.vmMap
-        }
-      } catch (error) {
-        console.log('获取子应用的函数错误：',error);
-      }
+    try {
+      
+      // q: 待梳理 如何支持微应用控制面板的判断 从而接入微应用 
+      // a: 用户传递一个获取子应用全局变量的函数，会在执行时传递当前的组件Map，此函数中应判断如果符合子应用逻辑，则将vmMap交由子应用进行托管
+      let mappWinodow = callFn(getMappWinodow,vmMap,$vm);
+      if (mappWinodow && mappWinodow.vmMap) {
+        vmMap = mappWinodow.vmMap
+      } 
+    } catch (error) {
+      console.log('获取子应用的函数错误：',error);
     }
     
     let hasElementUI = false; // 项目是否接入了elementUi
@@ -244,12 +244,8 @@ function pluginFn(options){
   }
   let VmDebugPlugin = {
       install(_Vue){
-       // 只在本地开发的时候生效，避免污染线上
-       let isLocal = location.host.indexOf(8082) !== -1;
-       if(isLocal){
          Vue = _Vue
          initVmDebugPlugin()
-       }
       }
   }
   return VmDebugPlugin

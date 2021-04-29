@@ -5,5 +5,11 @@ vmPluginFn({
         if(vmMap.friday && Object.keys(vmMap).length == 1 && $vm.app){
             return $vm.app.sandbox.proxy;
         }
-    }
+    },
+    isDev(location){
+        if (location.host.indexOf(8082) !== -1) {
+            return true
+        }
+    },
+    // isMapp: true 如果是子应用 需要设置为true
 })
