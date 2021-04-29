@@ -6,7 +6,8 @@ function pluginFn(options){
   let h; // 用于存储$createElement函数
   let vmMap = {}; // 实现$vm调试模式 用以保存vue实例的map
   let {
-    getMappWinodow // 获取子应用全局变量的函数 如果无返回值正常渲染即可
+    getMappWinodow, // 获取子应用全局变量的函数 如果无返回值正常渲染即可
+    hasElementUI  // 项目是否接入了elementUi w-todo 后面可以兼容iview之类的组件库 或者自定义
   } = options;
   function initVmDebugPlugin(){
     let data = {
@@ -14,10 +15,14 @@ function pluginFn(options){
         notFirstRenderChooseBtn: false
     }
     
-    let hasElementUI = false; // 项目是否接入了elementUi
-    if(Vue.prototype.$msgbox) {
-      hasElementUI = true;
+    // let hasElementUI = false; // 项目是否接入了elementUi
+    if(hasElementUI){
+      if(Vue.prototype.$msgbox) {
+        hasElementUI = false; // 避免用户搞错
+        notice('您没有接入elementUi哦,msgbox方法查找不到')
+      }
     }
+   
   
     importPlugin();
     renderVmDebugPlugin();

@@ -181,7 +181,7 @@ setVmInstance (vmKey = '',isPage = false) {
 - 解决问题
   - 无法承接微前端场景（因为子应用中的window是被封装过的）
 
-##### 暴露配置项
+##### 暴露配置项：解决生产环境区分问题和承接子应用问题
 分离主应用和子应用插件功能,暴露配置项isMapp用于判断是否为子应用;
 暴露配置项getMappWinodow用于主应用获取子应用的全局变量;
 暴露isDev用于判断需不需要加载插件;
@@ -193,9 +193,13 @@ setVmInstance (vmKey = '',isPage = false) {
 - 解决问题
   - 避免污染生产环境
 
+##### 暴露配置项：支持ElementUI 美化样式
+暴露hasElementUI用于判断项目是否接入了elementUI 如果接入了则使用jsx渲染其组件;
 
-### 待优化
+- 存在问题
+  - 代码污染问题，需要在需要调试的组件里加`d_name`
 
--  后期应该改为【API转发工具】的能力，点击按钮进行切换，将`setVm`这种内部API隐藏起来更友好。
--  代码层采用mixin 统一使用name作为key，这样就可以直接Vue.mixin中的mounted方法去执行`setVmInstance`了，代码侵入性更低。
+- 解决问题
+  - vue实例无法被垃圾回收
+  - 样式太丑了（zzz，太忙了，有时间再优化，暂时支持elementUi，后期有时间自己去优化下，支持任意的组件库）
 
