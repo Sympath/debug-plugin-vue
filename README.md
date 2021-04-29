@@ -19,7 +19,7 @@ Vue项目（如我司）经常会出现VueDevTool崩溃从而无法查看组件�
   - isDev  判断是否是开发环境 如果函数返回为true才接入插件（传入true也行）
   - hasElementUI   项目是否接入了elementUi 
 
-##### 举例（例子仓库）
+##### 举例（[例子仓库](https://gitee.com/zzmwzy/vue-debug-plugin-demo)）
 
 ###### 引入
 
