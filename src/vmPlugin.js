@@ -249,13 +249,25 @@ function pluginFn(options){
                   return h('el-col', {
                       props,
                       style
-                  }, [(
-                    <el-tooltip content={filePath} placement="top" effect="light">
-                      <el-button type="text" onClick={()=>{
-                          setVm(text)
-                          notice(`设置成功，当前$vm指向: ${ text }`)
-                      }}>{text}</el-button>
-                    </el-tooltip>
+                  }, [(h('el-tooltip', {
+                    props:{
+                      content:filePath,
+                      placement:"top",
+                      effect:"light"
+                    }
+                },[
+                  h('el-button', {
+                    props:{
+                      type:'text'
+                    },
+                    on: {
+                      click(){
+                            setVm(text)
+                            notice(`设置成功，当前$vm指向: ${ text }`)
+                          }
+                        }
+                      },text)
+                    ])
                   )])
               })
           }
