@@ -4,9 +4,9 @@ import {uglify} from 'rollup-plugin-uglify';
 export default {
     input:'./main.js',
     output:{
-        format:'umd', // 支持amd 和 commonjs规范 window.Vue
+        format:'commonjs', // 支持amd 和 commonjs规范 window.Vue
         name:'pluginWrapper',
-        file:'dist/umd/bundle.js',
+        file:'dist/bundle.js',
         sourcemap:true, // es5 -> es6源代码
         minify: true // 代码是否压缩
     },
@@ -14,12 +14,12 @@ export default {
         babel({ // 使用babel进行转化 但是拍出node_modules 文件
             exclude:'node_modules/**', // glob 语法
         }),
-        uglify({
-            compress: {
-              pure_getters: true,
-              unsafe: true,
-              unsafe_comps: true,
-            }
-          })
+        // uglify({
+        //     compress: {
+        //       pure_getters: true,
+        //       unsafe: true,
+        //       unsafe_comps: true,
+        //     }
+        //   })
     ]
 }

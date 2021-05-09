@@ -2,38 +2,10 @@
 function pluginFn(options){
   let Vue;
   function initVmDebugPlugin() {
-    importPlugin();
-  
-    function importPlugin(){
-    // 注册此组件的所有子组件
-    function registerComp(rootCompInstance,rootCompName) {
-      // vmMap[key] = rootCompInstance;
-      // 需要解决如何在页面中获取组件实例的需求 resolved
-      rootCompInstance.setVmInstance(rootCompName);
-      let compsInstance = rootCompInstance.$children;
-      compsInstance.forEach(comp => {
-        let compName = tf(comp.$options._componentTag);
-          // 递归加载 组件中的内容  w-todo 待添加引用关系 父子孙组件
-          registerComp(comp,compName)
-      })
-    }
-    function initVmMap(to,vm) {
-        registerComp(vm,'page')
-    }
     let vmDebugPluginMixin = {
-      // 在页面跳转时清空插件
-      beforeRouteLeave(to, from, next){
-        vmMap = new Map();
-        if(window.$vm) window.$vm = {};
-        next()
-      },
       beforeRouteEnter (to, from, next) {
         next(vm => {
-          if(!(pageVm)){
-            pageVm = vm;
-          }
-          // 在进行递归加载当前页所用到的组件及其对应组件
-          initVmMap(to,vm);
+          $vm = vm;
         })
       },
       methods:{
@@ -61,13 +33,12 @@ function pluginFn(options){
       }
     }
     Vue.mixin(vmDebugPluginMixin)
-    }
   }
 
   let VmDebugPlugin = {
       install(_Vue){
           Vue = _Vue
-          window.vmMap = {}; // 实现$vm调试模式 用以保存vue实例的map
+          window.$vm = {}; // 子应用中只做一件事，将当前最深路由屁哦配到的组件进行挂载在$vm上，便于getMappWinodow获取
           initVmDebugPlugin(Vue)
       }
   }
