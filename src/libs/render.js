@@ -1,23 +1,10 @@
-import { eachObj, getFilePath } from "../../util";
+import { eachObj, getFilePath, tf } from "../../util";
 import { $mount, creatDom, mountToBody, remove_items, setStyle } from "./dom";
-import { emitInitVmDebuPlugin, currentPageVm, setVm, getCurrentVmMap, routeVmList, getCurrentVmKey, setCurrentPageVmIndexByKey } from "./import";
+import { data } from "./import";
 
 let Vue;
 let h; // 用于存储$createElement函数
 let hasElementUI; // 用户传递的配置项
-window.data = {
-    showPhanel: false,// 控制是否显示面板
-    notFirstRenderChooseBtn: false
-}
-// 当前的路由key
-Object.defineProperty(data,'currentRouteKey',{
-    get(){
-        return getCurrentVmKey()
-    },
-    set(newVal){
-        setCurrentPageVmIndexByKey(newVal)
-    }
-})
 // 初始化时渲染插件所要渲染的组件  main入口函数
 function renderVmDebugPlugin(_Vue,_hasElementUI) {
     Vue = _Vue;
@@ -26,9 +13,27 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
     setStyle({
         'vm-msgbox': {
             width: '800px!important'
+        },
+        'vm-msgbox .el-col-12':{
+            height: '40px'
+        },
+        'vm-msgbox .vm-link': {
+            color: '#ccc'
+        },
+        'vm-msgbox .vm-link span.actived': {
+            color: '#409EFF'
+        },
+        'vm-msgbox .vm-link.actived': {
+            color: '#409EFF'
         }
+
     })
 }
+
+// 找到当前调试的路由页面组件 然后再进行切换
+function setVm(key = 'page') {
+    data.currentVueInstanceKey = key
+  }
 
 // 渲染控制的按钮
 export function renderChooseBtn(){
@@ -55,7 +60,7 @@ export function renderChooseBtn(){
         class : 'vm_debug_class',
         on:{
         click(){
-            if (getCurrentVmMap().size > 0) {
+            if (data.currentVmMap.size > 0) {
                 data.showPhanel = !data.showPhanel;
                 renderChoosePhanel()
             }else {
@@ -90,7 +95,7 @@ export function renderChoosePhanel(){
  
 // 保存createElement函数
 if(!h){
-    h = currentPageVm ? currentPageVm.$createElement : ()=>{console.log('未获取h函数');};
+    h = data.currentPageVm ? data.currentPageVm.$createElement : ()=>{ console.log('未获取h函数');};
 }
 // 如果有ui框架 就美化一下吧~
 if (hasElementUI) {
@@ -100,8 +105,7 @@ if (hasElementUI) {
 }
 
 function _renderChoosePhanelForElement(){
-   
-    function getCompList(vmMap) {
+    function getCompList(vmMap,routeKey="") {
         let children = [];
         let span = 24/Object.keys(vmMap).length;
         eachObj(vmMap,(vmKey,vmComp)=>{
@@ -112,12 +116,15 @@ function _renderChoosePhanelForElement(){
                 key: vmKey
                 },
                 style: {
-                textAlign: 'center'
+                    textAlign: 'center'
                 },
+                id: `${routeKey}--${vmKey}`,
+                className: `vm-link ${data.currentVueInstanceKey == vmKey ? 'actived' : ''}`,
                 events: {
-                click(){
+                click(e){
                     setVm(vmKey)
                     notice(`设置成功，当前$vm指向: ${ vmKey }`)
+                    // window.clickObj = e.target
                 }
                 },
                 tip:getFilePath(vmMap.get(vmKey)),
@@ -131,22 +138,27 @@ function _renderChoosePhanelForElement(){
     let components = []
     if (children) {
         components = children.map(child => {
-            let {key,props = {}, style = {} ,text, events = {},tip} = child;
+            let {key,props = {},id = '',className = '', style = {} ,text, events = {},tip} = child;
             
             return h('el-col', {
                 props,
-                style
+                style,
             }, [(h('el-tooltip', {
                 props:{
-                content:tip || '暂无提示内容',
-                placement:"top",
-                effect:"light"
+                    content:tip || '暂无提示内容',
+                    placement:"top",
+                    effect:"light",
+                    'open-delay': 1000,
                 }
             },[
             h('el-button', {
                 props:{
-                type:'text'
+                    type:'text'
                 },
+                attrs: {
+                    id,
+                },
+                class: className,
                 on: { 
                     ...events
                     }
@@ -162,9 +174,10 @@ function _renderChoosePhanelForElement(){
         }
     },[components])
     }
-    let children = routeVmList.map(routeVm =>  {
+    let children = data.routeVmList.map(routeVm =>  {
         let compList = [];
-        compList = getCompList(routeVm.vmMap)
+        compList = getCompList(routeVm.vmMap,routeVm.key)
+        routeVm.domList = compList;
         let content = generateRowComponent(h,{children:compList,props: {
             gutter:20
         }})
@@ -184,7 +197,7 @@ function _renderChoosePhanelForElement(){
             'tab-position':"left"
         },
         events: {
-
+            
         },
         children
     },data,'currentRouteKey')
@@ -211,11 +224,11 @@ function _renderChoosePhanelForElement(){
             on: {
                 ...events,
                 'tab-click':(item)=>{
-                    // console.log(item);
+                    // // console.log(item);
                     target[targetKey] = item.name
                 },
                 // tabClick(){
-                //     console.log(1111);
+                //     // console.log(1111);
                 // }
             }
         },_genPane(children))      
@@ -229,6 +242,8 @@ function _renderChoosePhanelForElement(){
         showClose: false,
         confirmButtonText: '关闭面板',
         beforeClose: (action, instance, done) => {
+            // 如果没有进行设置$vm 则切换路由不能影响当前属性 在关闭弹窗时需要设置currentRouteKey 为 _currentRouteKey
+            data.currentRouteKey = data._currentRouteKey
             done()
         }
     }).then(action => {
@@ -242,7 +257,7 @@ function _renderChoosePhanelForElement(){
 function _renderChoosePhanelForNormal() {
     if(data.showPhanel){
     let index = 0;
-    let vmMap = getCurrentVmMap();
+    let vmMap = data.currentVmMap;
     eachObj(vmMap,(vmKey,vmComp)=>{
         index++;
         let domOptions = {tag:'div',text:vmKey,opts:{

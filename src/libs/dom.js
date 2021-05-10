@@ -1,10 +1,11 @@
 import { eachObj } from "../../util";
-
+// 挂载dom至body
 export function mountToBody(dom){
     var bo = document.body; //获取body对象.
     //动态插入到body中
     bo.insertBefore(dom, bo.lastChild);
 }
+// 类似createElement 根据虚拟dom生成真实dom
 export function creatDom(domOpts){
     let {tag,text,opts,childrens = []} = domOpts;
                 //创建一个div
@@ -34,26 +35,30 @@ export function creatDom(domOpts){
     });
     return dom;
 }
+// 挂载指定dom
 export function $mount(el,dom){
 el = document.querySelector(el);
 el.appendChild(dom);
 }
+// 清空指定dom
 export function remove_items(className) {
 var pannel = document.querySelector(className)
 if(pannel && pannel.innerHTML) pannel.innerHTML = ""
 }
+// 设置样式
 export function setStyle(opts) {
+  
     let content = '';
+    let cssContent = '';
     function _setStyle(cssQuery,styleOption){
         eachObj(styleOption,(key,val)=>{
-            content += `${key}: ${val}`
+          cssContent += `${key}: ${val}`
         })
-        return `.${cssQuery} {
-                    ${content}
-                }
+        return `.${cssQuery} {${cssContent}}
                 `   
     }
     eachObj(opts,(cssQuery,styleOption)=>{
+        cssContent = ''
         content += _setStyle(cssQuery,styleOption)
     })
     let styleOption = {

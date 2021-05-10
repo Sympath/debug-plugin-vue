@@ -78,7 +78,8 @@ export function getVal(obj,str) {
     }else {
       return {
         err: true,
-        errKey: key
+        errKey: key,
+        result: ''
       }
     }  
   }
@@ -99,13 +100,10 @@ function flushCallbacks(...params) {
   waiting = false;
   callbacks = [];
 }
-// 批处理 第一次开定时器 ，后续只更新列表 ，之后执行清空逻辑
 
-// 1.第一次cb渲染watcher更新操作  （渲染watcher执行的过程肯定是同步的）
-// 2.第二次cb 用户传入的回调
 export function nextTick(cb,...params) {
   if(callbacks.some(callback => callback.name === cb.name)) {
-    // console.log('重复啦');
+    // // console.log('重复啦');
     return
   }
   
@@ -122,6 +120,26 @@ export function nextTick(cb,...params) {
   }
 }
 
+let timeId;
+let timeCbs = [];
+export function nextTickForSetTime(cb) {
+  if(timeCbs.some(callback => callback.name === cb.name)) {
+    // // console.log('重复啦');
+  }else {
+    timeCbs.push(cb); // 默认的cb 是渲染逻辑 用户的逻辑放到渲染逻辑之后即可
+  }
+  if(timeId){
+    clearTimeout(timeId)
+  }
+  timeId = setTimeout(() => {
+    for (let i = 0; i < timeCbs.length; i++) {
+      let callback = timeCbs[i];
+      callback();
+  }
+  }, 500);
+
+}
+
 export function getFilePath(compsInstance) {
   let filePath;
   let filePathInfo = getVal(compsInstance,`$options.__file`);
@@ -134,4 +152,15 @@ export function getFilePath(compsInstance) {
     filePath = `对应文件路径为${ filePathInfo.result}`
   }
   return filePath
+}
+
+export function setActive(selector,targetSelector){
+  let all = document.querySelectorAll(selector)
+  let target = document.querySelector(targetSelector)
+  if(all && target){
+    Array.from(all).forEach((item) => {
+      item.classList.remove('actived')
+    })
+    target.classList.add('actived')
+  }
 }

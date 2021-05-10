@@ -7,7 +7,7 @@ export default {
         format:'commonjs', // 支持amd 和 commonjs规范 window.Vue
         name:'pluginWrapper',
         file:'dist/bundle.js',
-        sourcemap:true, // es5 -> es6源代码
+        sourcemap:false, // es5 -> es6源代码
         minify: true // 代码是否压缩
     },
     plugins:[
