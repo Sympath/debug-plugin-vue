@@ -1,10 +1,11 @@
-import { eachObj, getFilePath, tf } from "../../util";
-import { $mount, creatDom, mountToBody, remove_items, setStyle } from "./dom";
-import { data } from "./import";
+import { eachObj, getFilePath, getVal, tf } from "../../util";
+import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
+import { data, getVmByKey } from "./import";
 
 let Vue;
 let h; // 用于存储$createElement函数
 let hasElementUI; // 用户传递的配置项
+let delay = 1000;
 // 初始化时渲染插件所要渲染的组件  main入口函数
 function renderVmDebugPlugin(_Vue,_hasElementUI) {
     Vue = _Vue;
@@ -33,7 +34,7 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
 // 找到当前调试的路由页面组件 然后再进行切换
 function setVm(key = 'page') {
     data.currentVueInstanceKey = key
-  }
+}
 
 // 渲染控制的按钮
 export function renderChooseBtn(){
@@ -49,7 +50,7 @@ export function renderChooseBtn(){
         backgroundColor: '#38f',
         borderRidus: '50%',
         width: '40px',
-        zIndex: '1024',
+        zIndex: '9999',
         fontSize: '13px',
         textAlign: 'center',
         borderRadius: '50%',
@@ -61,8 +62,10 @@ export function renderChooseBtn(){
         on:{
         click(){
             if (data.currentVmMap.size > 0) {
-                data.showPhanel = !data.showPhanel;
-                renderChoosePhanel()
+                if (!data.showPhanel) {
+                    data.showPhanel = true;
+                    renderChoosePhanel()
+                }
             }else {
                 notice('组件列表为空，糟糕，大概出啥子问题了，快去提issue吧~')
             }
@@ -89,10 +92,10 @@ export function renderChooseBtn(){
     let div2 = creatDom(domOptions2)
     mountToBody(div2)
 }
+
 // 需重写 以实现无elementUi 的情况
 // 渲染显示的面板
 export function renderChoosePhanel(){
- 
 // 保存createElement函数
 if(!h){
     h = data.currentPageVm ? data.currentPageVm.$createElement : ()=>{ console.log('未获取h函数');};
@@ -104,11 +107,28 @@ if (hasElementUI) {
     _renderChoosePhanelForNormal.call(this)
 }
 
+
+function wrapTooltip(vnode,tipProps = {},other = {}) {
+    tipProps.content = getVal(tipProps,'tip','暂无提示内容').result;
+    tipProps.placement = getVal(tipProps,'placement','top').result;
+    tipProps.effect = getVal(tipProps,'effect','light').result;
+    tipProps.effect = getVal(tipProps,'effect','light').result;
+    tipProps['open-delay'] = getVal(tipProps,'delay',delay).result;
+
+    return h('el-tooltip', {
+        props:{
+            ...tipProps
+        },
+        ...other
+    },[vnode])
+}
 function _renderChoosePhanelForElement(){
     function getCompList(vmMap,routeKey="") {
         let children = [];
         let span = 24/Object.keys(vmMap).length;
         eachObj(vmMap,(vmKey,vmComp)=>{
+            let showClothTimer;
+            let flag = false;
             children.push({
                 props: {
                 label: vmKey,
@@ -119,62 +139,76 @@ function _renderChoosePhanelForElement(){
                     textAlign: 'center'
                 },
                 id: `${routeKey}--${vmKey}`,
-                className: `vm-link ${data.currentVueInstanceKey == vmKey ? 'actived' : ''}`,
+                className: `vm-link`,
                 events: {
-                click(e){
-                    setVm(vmKey)
-                    notice(`设置成功，当前$vm指向: ${ vmKey }`)
-                    // window.clickObj = e.target
-                }
+                    click(e){
+                        setVm(vmKey)
+                        notice(`设置成功，当前$vm指向:  ${routeKey}的${ vmKey }`)
+                        setMask(data.currentPageVm.$el)
+                        // window.clickObj = e.target
+                    },
+                    mouseenter(e){
+                        showClothTimer = setTimeout(()=>{
+                            setMask(getVmByKey(vmKey).$el)
+                            flag = true;
+                          },delay);
+                          return false;
+                    },
+                    mouseleave(){
+                        clearTimeout(showClothTimer);
+                        if(flag){
+                            removeMask()
+                            flag = false
+                        }
+                    }
                 },
                 tip:getFilePath(vmMap.get(vmKey)),
-                text: vmKey
+                text: vmKey,
+                isCurrentVmKey: `${routeKey}--${vmKey}` === data._currentVmkey
             })
         })
         return children;
     }
     function generateRowComponent(h, opt){
-    let {key,props = {}, style = {} , events = [],children = []} = opt;
-    let components = []
-    if (children) {
-        components = children.map(child => {
-            let {key,props = {},id = '',className = '', style = {} ,text, events = {},tip} = child;
-            
-            return h('el-col', {
-                props,
-                style,
-            }, [(h('el-tooltip', {
-                props:{
-                    content:tip || '暂无提示内容',
-                    placement:"top",
-                    effect:"light",
-                    'open-delay': 1000,
-                }
-            },[
-            h('el-button', {
-                props:{
-                    type:'text'
-                },
-                attrs: {
-                    id,
-                },
-                class: className,
-                on: { 
-                    ...events
+        let {key,props = {}, style = {} , events = [],children = []} = opt;
+        
+        let components = []
+        if (children) {
+            components = children.map((child,index) => {
+                let {key,props = {},id = '',className = '',isCurrentVmKey, style = {} ,text, events = {},tip} = child;
+                let childVnode = h('span',{
+                    style: {
+                        cursor: 'pointer'
+                    },
+                    on: {
+                        ...events
                     }
-                },text)
-                ])
-            )])
-        })
-    }
-    
-    return h('el-row',{
-        props: {
-        ...props
+                },[text])
+                
+                return h('el-col', {
+                    props,
+                    style,
+                    
+                }, [wrapTooltip(
+                    childVnode,{
+                        tip
+                    },{
+                        attrs: {
+                            id
+                        },
+                        class: isCurrentVmKey ?  `${className} actived` : className
+                    }
+                )])
+            })
         }
-    },[components])
+    
+        return h('el-row',{
+            props: {
+            ...props
+            }
+        },[components])
     }
-    let children = data.routeVmList.map(routeVm =>  {
+    let children = data.routeVmList.map((routeVm,index) =>  {
         let compList = [];
         compList = getCompList(routeVm.vmMap,routeVm.key)
         routeVm.domList = compList;
@@ -225,6 +259,7 @@ function _renderChoosePhanelForElement(){
                 ...events,
                 'tab-click':(item)=>{
                     // // console.log(item);
+                    console.log(item.name);
                     target[targetKey] = item.name
                 },
                 // tabClick(){
@@ -244,6 +279,9 @@ function _renderChoosePhanelForElement(){
         beforeClose: (action, instance, done) => {
             // 如果没有进行设置$vm 则切换路由不能影响当前属性 在关闭弹窗时需要设置currentRouteKey 为 _currentRouteKey
             data.currentRouteKey = data._currentRouteKey
+            // 关闭所有组件蒙层
+            removeMask()
+            data.showPhanel = false;
             done()
         }
     }).then(action => {

@@ -14,12 +14,6 @@ export default {
         babel({ // 使用babel进行转化 但是拍出node_modules 文件
             exclude:'node_modules/**', // glob 语法
         }),
-        // uglify({
-        //     compress: {
-        //       pure_getters: true,
-        //       unsafe: true,
-        //       unsafe_comps: true,
-        //     }
-        //   })
+        uglify()
     ]
 }

@@ -1,4 +1,4 @@
-import { eachObj } from "../../util";
+import { callFn, eachObj, getVal, typeCheck } from "../../util";
 // 挂载dom至body
 export function mountToBody(dom){
     var bo = document.body; //获取body对象.
@@ -41,13 +41,31 @@ el = document.querySelector(el);
 el.appendChild(dom);
 }
 // 清空指定dom
-export function remove_items(className) {
-var pannel = document.querySelector(className)
-if(pannel && pannel.innerHTML) pannel.innerHTML = ""
+export function remove_items(selector,opts = {
+  removeSelf : false,
+  isOne : true
+},cb) {
+  let {removeSelf,isOne} = opts
+  if(isOne){
+    var pannel = document.querySelector(selector)
+    _remove(pannel)
+  }else {
+    var pannels = document.querySelectorAll(selector)
+    Array.from(pannels).forEach(pannel=>_remove(pannel))
+  }
+  function _remove(dom) {
+    if(dom){
+      if(removeSelf){
+        callFn(cb,dom)
+        dom.remove()
+      }else if(dom.innerHTML) {
+        dom.innerHTML = ""
+      }
+    } 
+  }
 }
 // 设置样式
 export function setStyle(opts) {
-  
     let content = '';
     let cssContent = '';
     function _setStyle(cssQuery,styleOption){
@@ -68,4 +86,58 @@ export function setStyle(opts) {
     
     let styleDom = creatDom(styleOption)
     document.getElementsByTagName('head').item(0).appendChild(styleDom);
+}
+export function setMask(el){//设置遮罩层
+  
+  var mask = document.createElement('div');
+  if(typeCheck('String')(el)) el = document.querySelector(el)
+  if (!el) {
+    console.log('获取dom失败');
+    return
+  }
+  mask.className = 'checkDomMask'
+  mask.style.width = el.innerWidth + 'px';
+  mask.style.height = el.innerHeight + 'px';
+  mask.style.background = 'rgba(173,198,235,0.5)';
+  mask.style.position = 'absolute';
+  mask.style.top = '0';
+  mask.style.left = '0';
+  mask.style.width = '100%';
+  mask.style.height = '100%'; 
+  mask.style.zIndex = 10;
+  el.appendChild(mask);
+  mask._parentPosition = el.style.position;
+  el.style.position = 'relative'
+}
+export function removeMask() {
+  remove_items('.checkDomMask',{
+    removeSelf : true,
+    isOne : false
+  },(dom)=>{
+    if(getVal(dom,'parentNode.style.position').err){
+      console.log(getVal(dom,'parentNode.style.position').errKey);
+    }
+    else {
+      dom.parentNode.style.position = dom._parentPosition
+    }
+  })
+}
+
+// hover事件
+export function hover(opts) {  
+  let {dom,cb,outCb,cbParams = [],outCbParams = [],delay = 0} = opts;
+  var showClothTimer;
+  let flag = false; // cb是否执行过
+  dom.addEventListener('mouseenter',()=>{
+    showClothTimer = setTimeout(()=>{
+      callFn(cb,...cbParams)
+      flag = true;
+    },delay);
+  }, false )
+  button.addEventListener( 'mouseout', function(event) {
+    clearTimeout(showClothTimer);
+    if(flag){
+      callFn(outCb,...outCbParams)
+    }
+  }, false );
 }

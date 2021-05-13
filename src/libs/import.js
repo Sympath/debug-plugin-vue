@@ -1,4 +1,4 @@
-import { callFn, getVal, nextTick, nextTickForSetTime, setActive, tf } from "../../util";
+import { callFn, eachObj, getVal, nextTick, nextTickForSetTime, setActive, tf } from "../../util";
 
 let getMappWinodow; // 用户传来的配置项
 
@@ -10,7 +10,12 @@ export let data = {
   routeVmList : [],// 当前匹配到的路由列表，存储对象为PageVmHandler的实例
   currentRouteIndex : -1,// 当前页面组件索引
   _currentVmkey: '', // 当前$vm指向 由当前路由
-  currentPageVm: {}// 当前页面组件，即$vm指向的vue实例
+  currentPageVm: {},// 当前页面组件，即$vm指向的vue实例
+  // 遇到了一些会因为设置mask导致页面出错的组件 可以采用这个进行设置vm，传入索引，返回值是其filePath
+  setVm(index = 0){
+    data.currentVueInstanceKey =  Array.from(_data.currentVmMap)[index][0]
+    return Array.from(_data.currentVmMap)[index][1].$options.__file
+  }
 }
 window._data = data;
 
@@ -18,16 +23,22 @@ window._data = data;
 Object.defineProperty(data,'currentVueInstanceKey',{
   get(){
     // 初始化时进行默认设置值
-    return data._currentVmkey.split('--')[1] || 'page'
+    return data._currentVmkey.split('--')[1] || ''
   },
   // 根据key设置当前路由组件索引，即切换当前路由组件
   set(newVal){
     let key = `${data.currentRouteKey}--${newVal}`;
+    if(data._currentVmkey !== key){
       data._currentVmkey = key;
       // 如果没有进行设置$vm 则切换路由不能影响当前属性 在关闭弹窗时需要设置currentRouteKey 为 _currentRouteKey
       data._currentRouteKey = data.currentRouteKey;
-      window.$vm = data.currentVmMap.get(newVal);
+      data.currentPageVm = window.$vm = data.currentVmMap.get(newVal);
+      // 第一次的时候，因为dom还没有渲染出来，所以不会生效 但在渲染时已经进行了判断 所以高亮还是会存在
       setActive('.vm-link',`#${key}`)
+    }else {
+
+    }
+     
   }
 })
 // 获取当前路由组件ids
@@ -62,7 +73,9 @@ Object.defineProperty(data,'currentRouteKey',{
 
 
 
-
+export function getVmByKey(key,routeKey = data.currentRouteKey) {
+  return data.routeVmList.filter(route=>route.match('key',routeKey))[0].vmMap.get(key)
+}
 
 /**
  * 核心类
@@ -233,6 +246,8 @@ export function emitInitVmDebuPlugin(){
       data.currentRouteIndex = data.routeVmList.length -1;
       // 持有最初的路由key 用以实现关闭弹窗时还原数据的功能
       data._currentRouteKey = data.currentRouteKey;
+      // data._currentVmkey = data.currentRouteKey+'--page';
+      data.currentVueInstanceKey = 'page'
     }
     // 避免重复调用
     nextTickForSetTime(initVmDebuPlugin)

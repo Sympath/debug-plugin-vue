@@ -68,18 +68,17 @@ export function tf(str){
   return str
 };
 // 链式获取值 例如compsInstance上取值 .$parent.$options.components.page
-export function getVal(obj,str) {
-  
+export function getVal(obj,str,defaultVal = '') {
   let keys = str.split('.')  
   while (keys && keys.length > 0) {
     let key = keys.shift();
-    if(obj[key]){
+    if(!typeCheck('Undefined')(obj[key])){
       obj = obj[key];
     }else {
       return {
         err: true,
         errKey: key,
-        result: ''
+        result: defaultVal
       }
     }  
   }
@@ -88,6 +87,7 @@ export function getVal(obj,str) {
     result: obj
   }
 } 
+
 
 let callbacks = [];
 let waiting = false;
