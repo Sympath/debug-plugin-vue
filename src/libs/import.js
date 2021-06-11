@@ -1,20 +1,44 @@
-import { callFn, eachObj, getVal, nextTick, nextTickForSetTime, setActive, tf } from "../../util";
+import { callFn, deWeight, eachObj, getVal, nextTick, nextTickForSetTime, setActive, tf, typeCheck } from "../../util";
 
 let getMappWinodow; // 用户传来的配置项
 
 
-
+let mappSId = ''
 export let data = {
+  mappChannelInstance: false, // 微应用控制面板实例
   showPhanel: false,// 控制是否显示面板
   notFirstRenderChooseBtn: false,
   routeVmList : [],// 当前匹配到的路由列表，存储对象为PageVmHandler的实例
   currentRouteIndex : -1,// 当前页面组件索引
   _currentVmkey: '', // 当前$vm指向 由当前路由
   currentPageVm: {},// 当前页面组件，即$vm指向的vue实例
+  debuggerProps: '', // 检测属性
   // 遇到了一些会因为设置mask导致页面出错的组件 可以采用这个进行设置vm，传入索引，返回值是其filePath
   setVm(index = 0){
     data.currentVueInstanceKey =  Array.from(_data.currentVmMap)[index][0]
     return Array.from(_data.currentVmMap)[index][1].$options.__file
+  },
+  setDegger(name){
+    // $vm[name] = new Proxy($vm[name], {
+    //   get(target, key) {
+    //     console.log('获取了getter属性');
+    //     return target[key];
+    //   }
+    // })
+    let changes = [];
+    _data.changeKey = changes;
+    $vm.$watch(name,(newVal,oldVal)=>{
+      changes.push({
+        newVal,
+        oldVal
+      })
+      
+      console.log('新值：' + JSON.stringify(newVal),
+      '老值：' + JSON.stringify(oldVal))
+      // console.log(arguments.callee.caller.name);
+      // console.log((new Error()).stack.split("\n")[2].trim().split(" ")[1]);
+      // console.log((new Error()).stack);
+    })
   }
 }
 window._data = data;
@@ -122,9 +146,11 @@ class PageVmHandler {
         }
       }
     }
-    function _registerComp(rootCompInstance,rootCompName){
-      setVmInstance.call(rootCompInstance,rootCompName)
-      ids.push(rootCompInstance._uid);
+    function _registerComp(rootCompInstance,rootCompName,root = true){
+      if(root){
+        setVmInstance.call(rootCompInstance,rootCompName)
+        ids.push(rootCompInstance._uid);
+      }
       let compsInstance = rootCompInstance.$children;
       compsInstance.forEach(comp => {
           let {err,result} = getVal(comp,'$options._componentTag');
@@ -132,18 +158,28 @@ class PageVmHandler {
           if(err){
             // // console.log('获取失败',rootCompInstance,comp);
               // compName = '获取失败'
+              // if(comp.initList){
+                compName = comp.$el.classList[0] || comp.$vnode.tag;
+                
+              // }
           }else {
-              compName = tf(result);
-              // 递归加载 组件中的内容  w-todo 待添加引用关系 父子孙组件
-              let filePathInfo = getVal(comp,`$options.__file`);
-              // 如果找不到__file 说明是全局UI组件 忽略掉
-              if(filePathInfo.err){ 
-
-              } 
-              // 如果不是src中引入的文件，说明也不是本地组件
-              else if(filePathInfo.result.startsWith('src/')) {
-                _registerComp(comp,compName)
-              }
+              compName = result;
+          }
+          // -转驼峰
+          compName = tf(compName);
+          // 递归加载 组件中的内容  w-todo 待添加引用关系 父子孙组件
+          let filePathInfo = getVal(comp,`$options.__file`);
+          // 如果找不到__file 说明是全局UI组件 忽略掉
+          if(filePathInfo.err){ 
+            // if(comp.initList){
+              _registerComp(comp,compName)
+            // }
+          } 
+          // 如果不是src中引入的文件，说明也不是本地组件
+          else if(filePathInfo.result.startsWith('src/')) {
+            _registerComp(comp,compName)
+          }else if(typeCheck('Array')(comp.$children)) {
+            _registerComp(comp,compName,false)
           }
           
       })
@@ -191,18 +227,6 @@ export function emitInitVmDebuPlugin(){
      // console.log('开始注册逻辑 订阅');
     // 根据页面组件获取其对应的收集中心 （考虑都要支持多级路由 此处为将所有PageVmHandler进行收集中心的初始化）
     function initVmDebuPlugin(){
-      // console.log('开始注册逻辑 发布')
-      try {
-          // 待梳理支持子应用 resolved 如果用户传递的【是否属于子应用】函数匹配成功并返回了当前页面组件实例，则交由子应用接管
-          // q: 待梳理 如何支持微应用控制面板的判断 从而接入微应用 
-          // a: 用户传递一个获取子应用全局变量的函数，会在执行时传递当前的匹配到的路径，此函数中应判断如果符合子应用逻辑，则将vmMap交由子应用进行托管
-          let mappCurrentPageVm = callFn(getMappWinodow,window.location.href,data.currentPageVm);
-          if(mappCurrentPageVm && mappCurrentPageVm._uid){
-            currentPageVm = mappCurrentPageVm
-          }
-      } catch (error) {
-          // console.log('获取子应用的函数错误：',error);
-      }
        /**
         * 收集每级路由对应页面收集中心 
         * 在子跳父级别页面跳转时，不会触发beforeRouteEnter钩子，这也意味着初始化插件逻辑不会被执行，所以我们需要在beforeRouteLeave中一个类似domdiff的处理
@@ -211,7 +235,7 @@ export function emitInitVmDebuPlugin(){
         *     3. 如果是去路由全包裹当前路由，说明是父跳子，复用splice的数组，然后在进行去重即可
         *     4. 如果局部相同，说明是兄弟跳转，看匹配到哪个组件没有uid，即停止比对（因为兄弟跳转代表有组件是未挂载状态）
         * */
-       if(getVal(data,'currentPageVm.$route.matched').err) return
+      if(getVal(data,'currentPageVm.$route.matched').err) return
       let newRouteVmList = data.currentPageVm.$route.matched.slice(data.routeVmList.length).map((match,index) =>{
         let filePathInfo = getVal(match,'components.default.__file')
         if(!filePathInfo.err){
@@ -239,6 +263,8 @@ export function emitInitVmDebuPlugin(){
         })
       })
       data.routeVmList.push(...newRouteVmList)
+      // 数组去重 避免微应用中出现路由对象存在重复的情况 /order 原因待定
+      deWeight( data.routeVmList,'key')
       data.routeVmList.forEach((routeVm,index) => {
         routeVm.init()
       })
@@ -249,20 +275,43 @@ export function emitInitVmDebuPlugin(){
       // data._currentVmkey = data.currentRouteKey+'--page';
       data.currentVueInstanceKey = 'page'
     }
-    // 避免重复调用
-    nextTickForSetTime(initVmDebuPlugin)
+    // console.log('开始注册逻辑 发布')
+    try {
+      if(data.mappChannelInstance){
+        clearTimeout(mappSId)
+        mappSId = setTimeout(() => {
+          // 待梳理支持子应用 resolved 如果用户传递的【是否属于子应用】函数匹配成功并返回了当前页面组件实例，则交由子应用接管
+          // q: 待梳理 如何支持微应用控制面板的判断 从而接入微应用
+          // a: 用户传递一个获取子应用全局变量的函数，会在执行时传递当前的匹配到的路径，此函数中应判断如果符合子应用逻辑，则将vmMap交由子应用进行托管
+          let mappWindow = callFn(getMappWinodow,window.location.href,data.mappChannelInstance);
+          let mappCurrentPageVm = mappWindow.$vm;
+
+          if(mappCurrentPageVm && mappCurrentPageVm._uid){
+            data.currentPageVm = mappCurrentPageVm;
+            // data.mappChannelInstance = false; // 将其置空 避免多次进入微应用注册逻辑
+          }
+          // 避免重复调用
+          nextTickForSetTime(initVmDebuPlugin)
+        }, 10000);
+      }else {
+        // 避免重复调用
+        nextTickForSetTime(initVmDebuPlugin)
+      }
+
+    } catch (error) {
+        // console.log('获取子应用的函数错误：',error);
+    }
 }
 
 // 装载插件 入口函数 main
-function importPlugin(Vue,_getMappWinodow){  
- 
+function importPlugin(Vue,_getMappWinodow,mappPanelKey){  
+
   let vmDebugPluginMixin = {
     beforeRouteEnter (to, from, next) {
       next(function (vm) {
         // 收集每级路由对应页面收集中心
         // data.routeVmList.push(new PageVmHandler(routeName,vm,data.routeVmList.length));
         // 默认最后一个被路由匹配上为当前页面组件
-
         data.currentPageVm = to.matched[to.matched.length-1].instances.default
         data.currentRouteIndex = to.matched.length-1;
         emitInitVmDebuPlugin(); 
@@ -291,6 +340,10 @@ function importPlugin(Vue,_getMappWinodow){
       //   // // console.log('开始注册逻辑 订阅',this.$options.name);
       // }
       if( getVal(this,'$options.__file').result.startsWith('src/')){
+        // 定义在微应用的主应用中控制面板d_name的值 如果相同 说明是控制面板实例 保存用于主应用获取子应用的包裹全局对象
+        if(this.$options.d_name=== mappPanelKey){
+          data.mappChannelInstance = this;
+        }
         emitInitVmDebuPlugin()
         // // console.log('开始注册逻辑 订阅',this.$options.name);
       }

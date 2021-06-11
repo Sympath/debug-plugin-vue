@@ -67,6 +67,18 @@ export function tf(str){
   });
   return str
 };
+// 数组对象去重
+export function deWeight (arr,key) {
+  let map = new Map();
+  arr.forEach((item,index) => {
+    if (!map.has(item[key])) {
+      map.set(item[key], item);
+    }else {
+      arr.splice(index,1)
+    }
+  })
+  return [...map.values()];
+}
 // 链式获取值 例如compsInstance上取值 .$parent.$options.components.page
 export function getVal(obj,str,defaultVal = '') {
   let keys = str.split('.')  

@@ -2,6 +2,7 @@ import { eachObj, getFilePath, getVal, tf } from "../../util";
 import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
 import { data, getVmByKey } from "./import";
 
+
 let Vue;
 let h; // 用于存储$createElement函数
 let hasElementUI; // 用户传递的配置项
@@ -98,7 +99,13 @@ export function renderChooseBtn(){
 export function renderChoosePhanel(){
 // 保存createElement函数
 if(!h){
-    h = data.currentPageVm ? data.currentPageVm.$createElement : ()=>{ console.log('未获取h函数');};
+    if(data.mappChannelInstance){
+
+        h = data.mappChannelInstance ? data.mappChannelInstance.$createElement : ()=>{ console.log('未获取h函数');};
+    }else {
+        h = data.currentPageVm ? data.currentPageVm.$createElement : ()=>{ console.log('未获取h函数');};
+    }
+    // h = createElement;
 }
 // 如果有ui框架 就美化一下吧~
 if (hasElementUI) {
