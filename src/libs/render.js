@@ -34,6 +34,7 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
 
 // 找到当前调试的路由页面组件 然后再进行切换
 function setVm(key = 'page') {
+
     data.currentVueInstanceKey = key
 }
 
@@ -68,7 +69,7 @@ export function renderChooseBtn(){
                     renderChoosePhanel()
                 }
             }else {
-                notice('组件列表为空，糟糕，大概出啥子问题了，快去提issue吧~')
+                notice(data.errMsg)
             }
         }
         }
@@ -99,13 +100,13 @@ export function renderChooseBtn(){
 export function renderChoosePhanel(){
 // 保存createElement函数
 if(!h){
-    if(data.mappChannelInstance){
+    // if(data.mappChannelInstance){
 
-        h = data.mappChannelInstance ? data.mappChannelInstance.$createElement : ()=>{ console.log('未获取h函数');};
-    }else {
-        h = data.currentPageVm ? data.currentPageVm.$createElement : ()=>{ console.log('未获取h函数');};
-    }
-    // h = createElement;
+    //     h = data.mappChannelInstance ? data.mappChannelInstance.$createElement : ()=>{ console.log('未获取h函数');};
+    // }else {
+    //     h = data.currentPageVm ? data.currentPageVm.$createElement : ()=>{ console.log('未获取h函数');};
+    // }
+    h = data.h;
 }
 // 如果有ui框架 就美化一下吧~
 if (hasElementUI) {
@@ -130,6 +131,7 @@ function wrapTooltip(vnode,tipProps = {},other = {}) {
     },[vnode])
 }
 function _renderChoosePhanelForElement(){
+    data._currentRouteKey = data.currentRouteKey;
     function getCompList(vmMap,routeKey="") {
         let children = [];
         let span = 24/Object.keys(vmMap).length;
@@ -151,21 +153,29 @@ function _renderChoosePhanelForElement(){
                     click(e){
                         setVm(vmKey)
                         notice(`设置成功，当前$vm指向:  ${routeKey}的${ vmKey }`)
-                        setMask(data.currentPageVm.$el)
+                        // 对弹窗组件不做处理 避免出现定位错乱问题
+                        // if(vmKey.indexOf('Dialog') === -1){
+                        //     setMask(data.currentPageVm.$el)
+                        // }
                         // window.clickObj = e.target
                     },
                     mouseenter(e){
-                        showClothTimer = setTimeout(()=>{
-                            setMask(getVmByKey(vmKey).$el)
-                            flag = true;
-                          },delay);
+                        if(vmKey.indexOf('Dialog') === -1){
+                            showClothTimer = setTimeout(()=>{
+                                setMask(getVmByKey(vmKey).$el)
+                                flag = true;
+                              },delay);
+                        }
+                        
                           return false;
                     },
                     mouseleave(){
-                        clearTimeout(showClothTimer);
-                        if(flag){
-                            removeMask()
-                            flag = false
+                        if(vmKey.indexOf('Dialog') === -1){
+                            clearTimeout(showClothTimer);
+                            if(flag){
+                                removeMask()
+                                flag = false
+                            }
                         }
                     }
                 },
@@ -286,6 +296,7 @@ function _renderChoosePhanelForElement(){
         beforeClose: (action, instance, done) => {
             // 如果没有进行设置$vm 则切换路由不能影响当前属性 在关闭弹窗时需要设置currentRouteKey 为 _currentRouteKey
             data.currentRouteKey = data._currentRouteKey
+
             // 关闭所有组件蒙层
             removeMask()
             data.showPhanel = false;

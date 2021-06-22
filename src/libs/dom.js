@@ -88,7 +88,6 @@ export function setStyle(opts) {
     document.getElementsByTagName('head').item(0).appendChild(styleDom);
 }
 export function setMask(el){//设置遮罩层
-  
   var mask = document.createElement('div');
   if(typeCheck('String')(el)) el = document.querySelector(el)
   if (!el) {
@@ -109,6 +108,7 @@ export function setMask(el){//设置遮罩层
   mask._parentPosition = el.style.position;
   el.style.position = 'relative'
 }
+
 export function removeMask() {
   remove_items('.checkDomMask',{
     removeSelf : true,

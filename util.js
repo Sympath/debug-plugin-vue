@@ -131,6 +131,39 @@ export function nextTick(cb,...params) {
       }); // 多次调用nextTick 只会开启一个promise
   }
 }
+let nextTickForImmediatelyCbSet = new Set();
+let nextTickForImmediatelyTid;
+export function nextTickForImmediately(fn) {
+  clearTimeout(nextTickForImmediatelyTid);
+  if(nextTickForImmediatelyCbSet.has(fn.name)){}
+  else {
+    fn();
+    nextTickForImmediatelyCbSet.add(fn.name);
+  }
+  nextTickForImmediatelyTid = setTimeout(() => {
+    nextTickForImmediatelyCbSet = new Set()
+  }, 1000);
+}
+
+export function reTry(cb,props,timeout=10000) {
+  let {
+    errCb,
+    finErrCb
+  } = props
+  try {
+    return callFn(cb)
+  } catch (error1) {
+    callFn(errCb)
+    setTimeout(() => {
+      try {
+        callFn(cb,error1)
+      }
+      catch (error2) {
+        callFn(finErrCb,error2)
+      }
+    }, timeout);
+  }
+}
 
 let timeId;
 let timeCbs = [];
