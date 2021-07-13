@@ -1,3 +1,6 @@
+import { mountToBody } from "./src/libs/dom";
+import { notice } from "./src/libs/render";
+
 /**
       * 深度去除对象中为空的参数  递归  避免传空时后台未考虑此逻辑而出错
       * obj  需清理的对象
@@ -194,7 +197,7 @@ export function getFilePath(compsInstance) {
   if(filePathInfo.err){
     filePath = '未查询到路径';
   }else {
-    filePath = `对应文件路径为${ filePathInfo.result}`
+    filePath = `${ filePathInfo.result}`
   }
   return filePath
 }
@@ -208,4 +211,60 @@ export function setActive(selector,targetSelector){
     })
     target.classList.add('actived')
   }
+}
+/**
+ * 复制指定内容
+ * @param {*} text 
+ */
+export function copy(text) {
+  // range.selectNode(copyContainer);
+  // window.getSelection().addRange(range);
+  let errMap = {
+    0: `自动复制成功，路径为${text}`,
+    1: '组件路径查询失败',
+    2: `自动复制失败，路径为${text}`,
+    3: '不支持execCommand方法，请用谷歌浏览器'
+  }
+  let errCode = 0;
+  // if(!text.startsWith('src/')){
+  //   errCode = 1
+  // }
+  if (!document.execCommand) errCode = 3;
+    // var textarea = document.createElement("textarea");
+	  // textarea.value = text;
+    // document.body.appendChild(textarea);
+	  // textarea.focus();
+    // textarea.setSelectionRange ? textarea.setSelectionRange(0, textarea.value.length) : textarea.select();
+    // var result = document.execCommand("copy");
+    // document.body.removeChild(textarea);
+    // if(result){
+
+    // }else {
+    //   errCode = 2
+    // }
+    
+  let copyContainer = document.querySelector('#copytext');
+  copyContainer.value = text
+  copyContainer.select()
+  var msg = '';
+  try {
+    var successful = document.execCommand('copy');
+    msg = successful ? 'successful' : 'unsuccessful';
+   
+    console.log('Copying text command was ' + msg);
+  } catch (err) {
+    errCode = 2;
+    msg = 'Oops, unable to copy'
+    console.log('Oops, unable to copy');
+  }
+  // notice(errMap[errCode])
+}
+
+// 页面插入script
+export function insertScript(src){
+  var head= document.getElementsByTagName('head')[0];
+  var script= document.createElement('script');
+  script.type= 'text/javascript';
+  script.src= src;
+  head.appendChild(script);
 }

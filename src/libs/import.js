@@ -1,5 +1,6 @@
 import { callFn, deWeight, eachObj, getVal, nextTick, nextTickForImmediately, nextTickForSetTime, reTry, setActive, tf, typeCheck } from "../../util";
 
+
 let getMappWinodow; // 用户传来的配置项
 
 
@@ -201,6 +202,15 @@ class PageVmHandler {
       else {
         if (!vmMap.has(vmKey)) {
           vmMap.set(vmKey , this);
+        }else {
+          // 存在使用多个组件的情况 保存方便更改指向找到需要的实例对象
+          if(!typeCheck('Array')(vmMap.get(vmKey).vms )){
+            vmMap.get(vmKey).vms = []
+            vmMap.get(vmKey).setVm1 = function setVm1(index) {
+              window.$vm1 = this.vms[index]
+            }
+          }
+          vmMap.get(vmKey).vms.push(this);
         }
       }
     }

@@ -10,7 +10,9 @@ export function creatDom(domOpts){
     let {tag,text,opts,childrens = []} = domOpts;
                 //创建一个div
     var dom = document.createElement(tag);
-    dom.innerHTML = text; //设置显示的数据，可以是标签．
+    if(text){
+      dom.innerHTML = text; //设置显示的数据，可以是标签．
+    }
 
     for (const key in opts) {
       if(key === 'style'){
@@ -21,6 +23,12 @@ export function creatDom(domOpts){
       }
       if (key === 'class') {
         dom.className = opts[key];
+      }
+      if (key === 'props') {
+        let propOpts = opts[key];
+        for (const propKey in propOpts) {
+          dom[propKey] = propOpts[propKey]
+        }
       }
       if (key === 'on') {
         let eventOpts = opts[key];

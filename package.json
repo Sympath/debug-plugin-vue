@@ -20,5 +20,11 @@
     "rollup": "^2.47.0",
     "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-uglify": "^6.0.4"
+  },
+  "dependencies": {
+    "call-ide": "^1.0.0",
+    "clipboard": "^2.0.8",
+    "copy-to-clipboard": "^3.3.1",
+    "shelljs": "^0.8.4"
   }
 }
