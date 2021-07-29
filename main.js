@@ -9,9 +9,11 @@ export default  function pluginWrapper(options) {
     isMapp,
     isDev
   } = options;
+  let _Vue;
   window.vmDebugPlugin = {
     open(){
-      initPlugin()
+      _Vue.use(initPlugin())
+      _Vue.prototype.$message({message:'已开启调试插件 需切换菜单后生效'})
     }
   }
   function initPlugin() {
@@ -26,11 +28,12 @@ export default  function pluginWrapper(options) {
   }
   // 如果是dev环境 才继续执行
   if(callFn(isDev,window.location)){
-    initPlugin();
+    return initPlugin();
   }else {
     return {
-      install(){
-
+      install(Vue){
+        debugger
+        _Vue = Vue;
       }
     }
   }
