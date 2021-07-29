@@ -32,7 +32,6 @@ export default  function pluginWrapper(options) {
   }else {
     return {
       install(Vue){
-        debugger
         _Vue = Vue;
       }
     }

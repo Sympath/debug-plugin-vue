@@ -2,7 +2,6 @@ import importPlugin from './libs/import';
 import renderVmDebugPlugin from './libs/render';
 
 function pluginFn(options){
-  debugger
   let Vue;
   let {
     getMappWinodow, // 获取子应用全局变量的函数 如果无返回值正常渲染即可

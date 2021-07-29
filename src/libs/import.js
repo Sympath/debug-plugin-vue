@@ -408,7 +408,6 @@ export function emitInitVmDebuPlugin(cb){
             nextTickForSetTime(initVmDebuPlugin)
             clearTimeout(mappSId)
           }else {
-            debugger
             throw mappWindow
           }
         },{
