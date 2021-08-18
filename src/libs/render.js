@@ -241,7 +241,38 @@ function _renderChoosePhanelForElement(){
             }
         }
     })
-    let message = generateTabs({
+    function generateLayout(header,content) {
+        return h('div', {},[
+            h('el-header', {style: {
+                paddingLeft: '60px'
+            }},[header]),
+            h('el-main', {},[content])
+        ])
+    }
+    function generateLayoutHeader() {
+        // 顶部功能按钮
+        let children = [h('el-button',{
+            on: {
+                click(){
+                    notice('重置成功')
+                    _data.setRouteVm(data.routeVmList.length -1);
+                }
+            }
+        },'重置')];
+        let content = children.map(c => h(
+            'el-col',{
+                props: {
+                    span: 6
+                }
+            },
+            [c]
+        ))
+        return h('el-row', {
+            gutter: 20
+        },content)
+    }
+    let layoutHeader = generateLayoutHeader();
+    let layoutContent = generateTabs({
         props: {
             // type: 'border-card',
             stretch: 'true',
@@ -252,6 +283,7 @@ function _renderChoosePhanelForElement(){
         },
         children
     },data,'currentRouteKey')
+    let message = generateLayout(layoutHeader,layoutContent);
     function generateTabs(opt,target,targetKey) {
         let {key,props = {}, style = {} , events = [],children = []} = opt;
     
@@ -266,10 +298,11 @@ function _renderChoosePhanelForElement(){
                 },[content])
             })
         }
+        let value = target ? target[targetKey] : "";
         return h('el-tabs',{
             props: {
                 ...props,
-                value: target[targetKey]
+                value
             },
             style,
             on: {
@@ -277,7 +310,7 @@ function _renderChoosePhanelForElement(){
                 'tab-click':(item)=>{
                     // // console.log(item);
                     console.log(item.name);
-                    target[targetKey] = item.name
+                    if(target) target[targetKey] = item.name
                 },
                 // tabClick(){
                 //     // console.log(1111);

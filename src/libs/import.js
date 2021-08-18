@@ -502,7 +502,6 @@ function importPlugin(Vue,_getMappWinodow,mappPanelKey){
         data.mappChannelInstance = this;
       }
       if( !noNeedResolveComp(this) && ( data.firstInited) && !data.isMapp){
-        // debugger
       //   // 定义在微应用的主应用中控制面板d_name的值 如果相同 说明是控制面板实例 保存用于主应用获取子应用的包裹全局对象
       //   if(this.$options.d_name=== mappPanelKey){
       //     data.mappChannelInstance = this;
