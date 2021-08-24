@@ -6,7 +6,7 @@ export default {
     output:{
         format:'commonjs', // 支持amd 和 commonjs规范 window.Vue
         name:'pluginWrapper',
-        file:'dist/bundle.js',
+        file:'/Users/wzyan/Documents/workspace/cloud-his-pc-static/src/global/vmDebugPlugin.js',
         sourcemap:false, // es5 -> es6源代码
         minify: true // 代码是否压缩
     },

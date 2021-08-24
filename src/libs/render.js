@@ -1,6 +1,8 @@
 import { eachObj, getFilePath, getVal, tf } from "../../util";
 import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
 import { data, getVmByKey } from "./import";
+import { elDialogDrag } from "./drag";
+import { genDropDown } from "../comps/gen";
 
 
 let Vue;
@@ -12,24 +14,65 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
     Vue = _Vue;
     hasElementUI = _hasElementUI;
     renderChooseBtn()
+    const screenWidth = document.body.clientWidth // body当前宽度
+    const screenHeight = document.documentElement.clientHeight // 可见区域高度(应为body高度，可某些环境下无法获取)
+    let msgboxWidth = 800;
+    let msgboxHeight = 500;
+    let left = (screenWidth - msgboxWidth) / 2;
+    let top = (screenHeight - msgboxHeight) / 2;
+    let pluginKey = 'vm';
+    let customClass = pluginKey + '-msgbox';
+    let boxClass = 'el-message-box';
     setStyle({
-        'vm-msgbox': {
-            width: '800px!important'
+        [`${customClass}`]: {
+            width: `${msgboxWidth}px!important`,
+            height: `${msgboxHeight}px!important;`,
+            position: 'absolute',
+            left: `${left}px`,
+            top: `${top}px`,
+            // bottom: '0',
+            // right: '0',
+            // margin: 'auto'
         },
-        'vm-msgbox .el-col-12':{
+
+        [`${customClass} .${boxClass}__message`]: {
+            position: 'relative'
+          },
+
+         
+          [`${customClass} .more`]: {
+            position: 'absolute',
+            right: 0,
+            [`z-index`]: '1'
+          },
+            // 关闭弹窗按钮样式
+        [`${customClass} .${boxClass}__btns.is-overflow`] : {
+            position:'absolute',
+            'text-align': 'center',
+            bottom:'0',
+            right: 0,
+            background: 'fff',
+            border: 'none',
+            "box-shadow": 'none'
+          },
+          [`${customClass} .${boxClass}__content`]: {
+            overflow: 'srcoll',
+            height: `${msgboxHeight - 48}px`
+          },
+          [`${customClass} .el-col-12`]:{
             height: '40px'
         },
-        'vm-msgbox .vm-link': {
+        [`${customClass} .${pluginKey}-link`]: {
             color: '#ccc'
         },
-        'vm-msgbox .vm-link span.actived': {
+        [`${customClass} .${pluginKey}-link span.actived`]: {
             color: '#409EFF'
         },
-        'vm-msgbox .vm-link.actived': {
+        [`${customClass} .${pluginKey}-link.actived`]: {
             color: '#409EFF'
         }
-
     })
+   
 }
 
 // 找到当前调试的路由页面组件 然后再进行切换
@@ -241,24 +284,31 @@ function _renderChoosePhanelForElement(){
             }
         }
     })
-    function generateLayout(header,content) {
+    function generateLayout(header,content, layoutFooter,layoutPlugin) {
         return h('div', {},[
-            h('el-header', {style: {
-                paddingLeft: '60px'
-            }},[header]),
+            layoutPlugin,
+            // h('el-aside', {
+            //   width: '200px'
+            // },[layoutAsider]),
             h('el-main', {},[content])
+
         ])
     }
+    // 目前未用上
     function generateLayoutHeader() {
+        return h('span', {
+        },'头部带扩充区域')
+    }
+    // 目前未用上
+    function generateLayoutFooter() {
         // 顶部功能按钮
         let children = [h('el-button',{
-            on: {
-                click(){
-                    notice('重置成功')
-                    _data.setRouteVm(data.routeVmList.length -1);
-                }
-            }
-        },'重置')];
+          on: {
+              click(){
+                  
+              }
+          }
+      },'待完成功能项')];
         let content = children.map(c => h(
             'el-col',{
                 props: {
@@ -270,6 +320,20 @@ function _renderChoosePhanelForElement(){
         return h('el-row', {
             gutter: 20
         },content)
+    }
+    function generateLayoutPlugin() {
+        return h('el-button', {
+          class: 'more',
+          on: {
+              click(){
+                  data.setRouteVm(data.routeVmList.length - 1);
+                  notice('重置成功')
+              }
+          }
+        },['重置'])
+        return genDropDown(h, ['重置'], function (item) {
+          console.log(item);
+        });
     }
     let layoutHeader = generateLayoutHeader();
     let layoutContent = generateTabs({
@@ -283,7 +347,9 @@ function _renderChoosePhanelForElement(){
         },
         children
     },data,'currentRouteKey')
-    let message = generateLayout(layoutHeader,layoutContent);
+    let layoutFooter = generateLayoutFooter();
+    let layoutPlugin = generateLayoutPlugin();
+    let message = generateLayout(layoutHeader,layoutContent, layoutFooter, layoutPlugin);
     function generateTabs(opt,target,targetKey) {
         let {key,props = {}, style = {} , events = [],children = []} = opt;
     
@@ -342,6 +408,9 @@ function _renderChoosePhanelForElement(){
 
     }
     },()=>{})
+    setTimeout(() => {
+        elDialogDrag('vm-msgbox')
+    }, 1000);
 }
 function _renderChoosePhanelForNormal() {
     if(data.showPhanel){

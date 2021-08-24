@@ -74,26 +74,29 @@ export function remove_items(selector,opts = {
 }
 // 设置样式
 export function setStyle(opts) {
-    let content = '';
-    let cssContent = '';
-    function _setStyle(cssQuery,styleOption){
-        eachObj(styleOption,(key,val)=>{
-          cssContent += `${key}: ${val}`
-        })
-        return `.${cssQuery} {${cssContent}}
-                `   
-    }
-    eachObj(opts,(cssQuery,styleOption)=>{
-        cssContent = ''
-        content += _setStyle(cssQuery,styleOption)
-    })
-    let styleOption = {
-        tag: 'style',
-        text: content
-    }
-    
-    let styleDom = creatDom(styleOption)
-    document.getElementsByTagName('head').item(0).appendChild(styleDom);
+  let content = '';
+  let cssContent = '';
+  function _setStyle(cssQuery,styleOption){
+      eachObj(styleOption,(key,val)=>{
+        cssContent += `${key}: ${val};`
+      })
+      return `.${cssQuery} {${cssContent}}
+              `   
+  }
+  eachObj(opts,(cssQuery,styleOption)=>{
+      cssContent = ''
+      content += _setStyle(cssQuery,styleOption)
+  })
+  let styleOption = {
+      tag: 'style',
+      opts:{props: {
+        id: 'vmDebugId'
+      }},
+      text: content
+  }
+  
+  let styleDom = creatDom(styleOption)
+  document.getElementsByTagName('head').item(0).appendChild(styleDom);
 }
 export function setMask(el){//设置遮罩层
   var mask = document.createElement('div');
