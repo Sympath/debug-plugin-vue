@@ -39,7 +39,6 @@ export function elDialogDrag(customClass) {
         if (styL === 'auto') styL = '0px'
         let styT = sty(dragDom, 'top')
 
-        console.log(styL)
         // 注意在ie中 第一次获取到的值为组件自带50% 移动之后赋值为px
         if (styL.includes('%')) {
             styL = +document.body.clientWidth * (+styL.replace(/%/g, '') / 100)

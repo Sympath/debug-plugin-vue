@@ -16,12 +16,12 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
     renderChooseBtn()
     const screenWidth = document.body.clientWidth // body当前宽度
     const screenHeight = document.documentElement.clientHeight // 可见区域高度(应为body高度，可某些环境下无法获取)
-    let msgboxWidth = 800;
-    let msgboxHeight = 500;
+    let msgboxWidth =  data.msgboxWidth;
+    let msgboxHeight = data.msgboxHeight;
     let left = (screenWidth - msgboxWidth) / 2;
     let top = (screenHeight - msgboxHeight) / 2;
-    let pluginKey = 'vm';
-    let customClass = pluginKey + '-msgbox';
+    let pluginKey = data.pluginKey;
+    let customClass = data.customClass;
     let boxClass = 'el-message-box';
     setStyle({
         [`${customClass}`]: {
@@ -181,6 +181,11 @@ function _renderChoosePhanelForElement(){
         eachObj(vmMap,(vmKey,vmComp)=>{
             let showClothTimer;
             let flag = false;
+            let tip = getFilePath(vmMap.get(vmKey));
+            // 是否展示没有文件地址的组件 本地开发环境时 第三方依赖没有文件地址；线上环境，所有组件都没有文件地址
+            if (data.filterDepends && tip === '未查询到路径') {
+                return;
+            }
             children.push({
                 props: {
                 label: vmKey,
@@ -222,7 +227,7 @@ function _renderChoosePhanelForElement(){
                         }
                     }
                 },
-                tip:getFilePath(vmMap.get(vmKey)),
+                tip,
                 text: vmKey,
                 isCurrentVmKey: `${routeKey}--${vmKey}` === data._currentVmkey
             })
@@ -408,6 +413,14 @@ function _renderChoosePhanelForElement(){
 
     }
     },()=>{})
+    setStyle({
+        [`${data.customClass}`]: {
+            width: `${data.msgboxWidth}px!important`,
+            height: `${data.msgboxHeight}px!important;`
+            // bottom: '0',
+            // right: '0',
+            // margin: 'auto'
+        }})
     setTimeout(() => {
         elDialogDrag('vm-msgbox')
     }, 1000);

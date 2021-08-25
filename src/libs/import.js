@@ -31,8 +31,10 @@ function getCompName(comp) {
 function noNeedResolveComp(comp){
   let noNeedResolve = false; // 默认需要处理
   let compName = getCompName(comp);
-  let ignoreComps = ['tableBody','tableHeader','vitIcon','transition']; // 需忽略的组件
-  let ignoreCompsPrefix = ['el','getNameFail']; // 需忽略的组件前缀
+  let ignoreComps = []; // 需忽略的组件
+  ignoreComps.push(...data.ignoreComps);
+  let ignoreCompsPrefix = ['getNameFail']; // 需忽略的组件前缀
+  ignoreCompsPrefix.push(...data.ignoreCompsPrefix)
   if(ignoreComps.some(comp => comp === compName)) noNeedResolve = true
   if(ignoreCompsPrefix.some(comp => compName.startsWith(comp))) noNeedResolve = true
 
@@ -95,10 +97,16 @@ export let data = {
       // console.log((new Error()).stack);
     })
   },
-  isDev: /qa.*test/.test(location.host)
+  isDev: /qa.*test/.test(location.host),
+  opts: {},// 用户传来的配置项
+  pluginKey : 'vm',
 }
+Object.defineProperty(data, 'customClass', {
+  get(){
+    return data.pluginKey + '-msgbox'
+  }
+})
 window._data = data;
-
 // $vm指向的key
 Object.defineProperty(data,'currentVueInstanceKey',{
   get(){
@@ -431,7 +439,38 @@ export function emitInitVmDebuPlugin(cb){
 
 
 // 装载插件 入口函数 main
-function importPlugin(Vue,_getMappWinodow,mappPanelKey){  
+function importPlugin(Vue,options){  
+  data.opts = options;
+  setDeFaultVal(data.opts)
+  eachObj(data.opts, (key, val) => {
+    Object.defineProperty(data, key, {
+      get(){
+        return data.opts[key]
+      },
+      set(newVal){
+        data.opts[key] = newVal;
+      }
+    })
+  })
+  function setDeFaultVal(obj){
+    let defaultMap = {
+      getMappWinodow(){},
+      ignoreComps: [],
+      ignoreCompsPrefix: [],
+      msgboxWidth: 800,
+      msgboxHeight: 500,
+      filterDepends: false
+    }
+    eachObj(defaultMap, (key, val) => {
+      if(typeof obj[key] !== typeof defaultMap[key]){
+        obj[key] = defaultMap[key]
+      }
+    })
+  }
+  let {
+    getMappWinodow, // 获取子应用全局变量的函数 如果无返回值正常渲染即可
+    mappPanelKey // 定义在微应用的主应用中控制面板d_name的值
+  } = options;
   let vmDebugPluginMixin = {
     beforeRouteEnter (to, from, next) {
       next(function (vm) {
@@ -516,7 +555,6 @@ function importPlugin(Vue,_getMappWinodow,mappPanelKey){
     }
   }
   Vue.mixin(vmDebugPluginMixin)
-  getMappWinodow = _getMappWinodow
 }
 
 export default importPlugin
