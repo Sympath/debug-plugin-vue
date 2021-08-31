@@ -441,7 +441,6 @@ export function emitInitVmDebuPlugin(cb){
 // 装载插件 入口函数 main
 function importPlugin(Vue,options){  
   data.opts = options;
-  setDeFaultVal(data.opts)
   eachObj(data.opts, (key, val) => {
     Object.defineProperty(data, key, {
       get(){
@@ -452,6 +451,7 @@ function importPlugin(Vue,options){
       }
     })
   })
+  setDeFaultVal(data.opts)
   function setDeFaultVal(obj){
     let defaultMap = {
       getMappWinodow(){},

@@ -178,117 +178,79 @@ function _renderChoosePhanelForElement(){
     function getCompList(vmMap,routeKey="") {
         let children = [];
         let span = 24/Object.keys(vmMap).length;
+        let tipProps = {};
         eachObj(vmMap,(vmKey,vmComp)=>{
             let showClothTimer;
             let flag = false;
             let tip = getFilePath(vmMap.get(vmKey));
+            let id = `${routeKey}--${vmKey}`;
             // 是否展示没有文件地址的组件 本地开发环境时 第三方依赖没有文件地址；线上环境，所有组件都没有文件地址
             if (data.filterDepends && tip === '未查询到路径') {
                 return;
             }
-            children.push({
-                props: {
-                label: vmKey,
-                span: 12,
-                key: vmKey
-                },
-                style: {
-                    textAlign: 'center'
-                },
-                id: `${routeKey}--${vmKey}`,
-                className: `vm-link`,
-                events: {
-                    click(e){
-                        setVm(vmKey)
-                        notice(`设置成功，当前$vm指向:  ${routeKey}的${ vmKey }`)
-                        // 对弹窗组件不做处理 避免出现定位错乱问题
-                        // if(vmKey.indexOf('Dialog') === -1){
-                        //     setMask(data.currentPageVm.$el)
-                        // }
-                        // window.clickObj = e.target
-                    },
-                    mouseenter(e){
-                        if(vmKey.indexOf('Dialog') === -1){
-                            showClothTimer = setTimeout(()=>{
-                                setMask(getVmByKey(vmKey).$el)
-                                flag = true;
-                              },delay);
-                        }
-                        
-                          return false;
-                    },
-                    mouseleave(){
-                        if(vmKey.indexOf('Dialog') === -1){
-                            clearTimeout(showClothTimer);
-                            if(flag){
-                                removeMask()
-                                flag = false
-                            }
+            children.push(
+            <el-col  
+                    label={vmKey}
+                    span={12}
+                    key={vmKey}
+                    style= {
+                        {
+                            textAlign: 'center'
                         }
                     }
-                },
-                tip,
-                text: vmKey,
-                isCurrentVmKey: `${routeKey}--${vmKey}` === data._currentVmkey
-            })
+                >
+                    
+                    <el-tooltip 
+                        content={tip || '暂无提示内容'}
+                        placement={getVal(tipProps,'placement','top').result}
+                        effect = {getVal(tipProps,'effect','light').result}
+                        effect = {getVal(tipProps,'effect','light').result}
+                        openDelay = {getVal(tipProps,'delay',delay).result}
+                        id = {id}
+                        class={ id === data._currentVmkey ? `vm-link actived` : `vm-link`}
+                        >
+                        <el-link 
+                        underline={false} 
+                        type="text"  
+                        onClick = {()=>{
+                            setVm(vmKey)
+                            notice(`设置成功，当前$vm指向:  ${routeKey}的${ vmKey }`)
+                        }}
+                        ><span
+                        onMouseenter={(e)=>{
+                            if(vmKey.indexOf('Dialog') === -1){
+                                showClothTimer = setTimeout(()=>{
+                                    setMask(getVmByKey(vmKey).$el)
+                                    flag = true;
+                                },delay);
+                            }
+                            
+                            return false;
+                        }}
+                        onMouseleave={()=>{
+                            if(vmKey.indexOf('Dialog') === -1){
+                                clearTimeout(showClothTimer);
+                                if(flag){
+                                    removeMask()
+                                    flag = false
+                                }
+                            }
+                        }}
+                        >{vmKey}</span>
+                        </el-link>
+                        </el-tooltip>
+                    </el-col>
+            )
         })
         return children;
     }
-    function generateRowComponent(h, opt){
-        let {key,props = {}, style = {} , events = [],children = []} = opt;
-        
-        let components = []
-        if (children) {
-            components = children.map((child,index) => {
-                let {key,props = {},id = '',className = '',isCurrentVmKey, style = {} ,text, events = {},tip} = child;
-                let childVnode = h('span',{
-                    style: {
-                        cursor: 'pointer'
-                    },
-                    on: {
-                        ...events
-                    }
-                },[text])
-                
-                return h('el-col', {
-                    props,
-                    style,
-                    
-                }, [wrapTooltip(
-                    childVnode,{
-                        tip
-                    },{
-                        attrs: {
-                            id
-                        },
-                        class: isCurrentVmKey ?  `${className} actived` : className
-                    }
-                )])
-            })
-        }
-    
-        return h('el-row',{
-            props: {
-            ...props
-            }
-        },[components])
+    function generateRowComponent(children, props = {}){
+        return <el-row
+        {...props}
+        >
+            {children}
+        </el-row>
     }
-    let children = data.routeVmList.map((routeVm,index) =>  {
-        let compList = [];
-        compList = getCompList(routeVm.vmMap,routeVm.key)
-        routeVm.domList = compList;
-        let content = generateRowComponent(h,{children:compList,props: {
-            gutter:20
-        }})
-        
-        return {
-            content,
-            props: {
-                label: routeVm.key,
-                name: routeVm.key,
-            }
-        }
-    })
     function generateLayout(header,content, layoutFooter,layoutPlugin) {
         return h('div', {},[
             layoutPlugin,
@@ -327,68 +289,77 @@ function _renderChoosePhanelForElement(){
         },content)
     }
     function generateLayoutPlugin() {
-        return h('el-button', {
-          class: 'more',
-          on: {
-              click(){
-                  data.setRouteVm(data.routeVmList.length - 1);
-                  notice('重置成功')
-              }
-          }
-        },['重置'])
-        return genDropDown(h, ['重置'], function (item) {
-          console.log(item);
-        });
+        return (
+            <el-button
+                class = 'more'
+                onClick = {()=>{
+                    data.setRouteVm(data.routeVmList.length - 1);
+                    notice('重置成功')
+                }}
+            > 重置 </el-button>
+        )
     }
-    let layoutHeader = generateLayoutHeader();
-    let layoutContent = generateTabs({
-        props: {
-            // type: 'border-card',
-            stretch: 'true',
-            'tab-position':"left"
-        },
-        events: {
+    function generateLayoutContent() {
+           let tabPannels = data.routeVmList.map((routeVm,index) =>  {
+            let compList = [];
+            compList = getCompList(routeVm.vmMap,routeVm.key)
+            routeVm.domList = compList;
+            let content = generateRowComponent(compList,{
+                gutter:20
+            })
             
-        },
-        children
-    },data,'currentRouteKey')
+            return {
+                content,
+                props: {
+                    label: routeVm.key,
+                    name: routeVm.key,
+                }
+            }
+        })
+        return (
+          <el-tabs 
+            value={
+                tabPannels[tabPannels.length - 1].props.label
+            }  
+            tab-position="left"
+            stretch={true}
+            on-tab-click={
+                (item)=>{
+                    if(data) data['currentRouteKey'] = item.name
+                }
+            }  
+            >
+              {
+                  tabPannels.map(item=>{
+                    let {props={},content} = item;
+                    return (
+                        <el-tab-pane 
+                            label={props.label}
+                            name={props.name}
+                            key={props.name}>{content}</el-tab-pane>
+                    )
+                })
+              }
+          </el-tabs>
+        )
+      }
+    let layoutHeader = generateLayoutHeader();
+    let layoutContent = generateLayoutContent();
+    // generateTabs({
+    //     props: {
+    //         // type: 'border-card',
+    //         stretch: 'true',
+    //         'tab-position':"left"
+    //     },
+    //     events: {
+            
+    //     },
+    //     children
+    // },data,'currentRouteKey')
     let layoutFooter = generateLayoutFooter();
     let layoutPlugin = generateLayoutPlugin();
     let message = generateLayout(layoutHeader,layoutContent, layoutFooter, layoutPlugin);
-    function generateTabs(opt,target,targetKey) {
-        let {key,props = {}, style = {} , events = [],children = []} = opt;
     
-        function _genPane(list) {
-            return list.map(item=>{
-                let {props={},content} = item;
-                return h('el-tab-pane',{
-                    props: {
-                        ...props,
-                        key: props.name
-                    }
-                },[content])
-            })
-        }
-        let value = target ? target[targetKey] : "";
-        return h('el-tabs',{
-            props: {
-                ...props,
-                value
-            },
-            style,
-            on: {
-                ...events,
-                'tab-click':(item)=>{
-                    // // console.log(item);
-                    console.log(item.name);
-                    if(target) target[targetKey] = item.name
-                },
-                // tabClick(){
-                //     // console.log(1111);
-                // }
-            }
-        },_genPane(children))      
-    }
     Vue.prototype.$msgbox({ 
         title: '左为路由，右为对应组件列表',
         message,
@@ -466,6 +437,41 @@ export function notice(msg,type = 'success') {
     else {
         alert(msg)
     }
+}
+
+function generateTabs(opt,target,targetKey) {
+    let {key,props = {}, style = {} , events = [],children = []} = opt;
+
+    function _genPane(list) {
+        return list.map(item=>{
+            let {props={},content} = item;
+            return h('el-tab-pane',{
+                props: {
+                    ...props,
+                    key: props.name
+                }
+            },[content])
+        })
+    }
+    let value = target ? target[targetKey] : "";
+    return h('el-tabs',{
+        props: {
+            ...props,
+            value
+        },
+        style,
+        on: {
+            ...events,
+            'tab-click':(item)=>{
+                // // console.log(item);
+                console.log(item.name);
+                if(target) target[targetKey] = item.name
+            },
+            // tabClick(){
+            //     // console.log(1111);
+            // }
+        }
+    },_genPane(children))      
 }
 
 export default renderVmDebugPlugin
