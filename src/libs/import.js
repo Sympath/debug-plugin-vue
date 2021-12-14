@@ -66,11 +66,23 @@ export let data = {
   _currentVmkey: '', // 当前$vm指向 由当前路由
   currentPageVm: {},// 当前页面组件，即$vm指向的vue实例
   // 遇到了一些会因为设置mask导致页面出错的组件 可以采用这个进行设置vm，传入索引，返回值是其filePath
-  setVm(index = 0){
-    data.currentVueInstanceKey =  Array.from(_data.currentVmMap)[index][0]
+  /**
+   * 
+   * @param {*} value 匹配索引 可以是索引 也可以是对象key
+   * @param {*} isKey 是否是对象key模式
+   * @returns 
+   */
+  setVm(value = 0, isKey = false){
+    let currentVueInstanceKey;
+    if(isKey){
+      currentVueInstanceKey =  _data.currentVmMap[value]
+    }else {
+      currentVueInstanceKey =  Array.from(_data.currentVmMap)[index][0]
+    }
+    data.currentVueInstanceKey = currentVueInstanceKey;
     return Array.from(_data.currentVmMap)[index][1].$options.__file
   },
-  setRouteVm(index = 0){
+  setRouteVm(index = 0, type){
     data.currentRouteIndex = index;
     data._currentRouteKey = data.routeVmList[index].key;
     return data.setVm(0);
@@ -107,6 +119,9 @@ Object.defineProperty(data, 'customClass', {
   }
 })
 window._data = data;
+if(window.vmDebugPlugin){
+  vmDebugPlugin._data = data;
+}
 // $vm指向的key
 Object.defineProperty(data,'currentVueInstanceKey',{
   get(){
