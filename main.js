@@ -1,3 +1,4 @@
+import { notice } from './src/libs/render';
 import mappPluginFn from './src/mappPlugin';
 import vmPluginFn from './src/vmPlugin';
 import {callFn} from './util';
@@ -10,12 +11,7 @@ export default  function pluginWrapper(options) {
     isDev
   } = options;
   let _Vue;
-  window.vmDebugPlugin = {
-    open(){
-      _Vue.use(initPlugin())
-      _Vue.prototype.$message({message:'已开启调试插件 需切换菜单后生效'})
-    }
-  }
+  console.log(1111);
   function initPlugin() {
      // 如果是子应用 则加载子应用的插件
      if(isMapp){
@@ -33,6 +29,12 @@ export default  function pluginWrapper(options) {
     return {
       install(Vue){
         _Vue = Vue;
+        setTimeout(() => {
+          (window._vmDebugger || {}).open = () => {
+            _Vue.use(initPlugin())
+            _Vue.prototype.$message({message:'已开启调试插件 需切换菜单后生效'})
+          }
+        }, 3000);
       }
     }
   }

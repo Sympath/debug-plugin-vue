@@ -70,22 +70,36 @@ export let data = {
    * 
    * @param {*} value 匹配索引 可以是索引 也可以是对象key
    * @param {*} isKey 是否是对象key模式
-   * @returns 
+   * @returns 切换的组件实例对象
    */
   setVm(value = 0, isKey = false){
     let currentVueInstanceKey;
+    let vmMapArr = Array.from(data.currentVmMap); // 格式为[[key,value]*]
+    let matchVm = {}; // 当前指向的对象实例
     if(isKey){
-      currentVueInstanceKey =  _data.currentVmMap[value]
+      currentVueInstanceKey =  value  
     }else {
-      currentVueInstanceKey =  Array.from(_data.currentVmMap)[index][0]
+      currentVueInstanceKey =  vmMapArr[value][0];
     }
     data.currentVueInstanceKey = currentVueInstanceKey;
-    return Array.from(_data.currentVmMap)[index][1].$options.__file
+    matchVm = data.currentVmMap.get(currentVueInstanceKey)
+    // matchVm.$options.__file
+    return matchVm;
   },
-  setRouteVm(index = 0, type){
+   /** setRouteVm
+   * 切换当前路由，默认会将$vm指向新路由对应的组件
+   * @param {*} index 匹配索引 可以是索引 也可以是对象key
+   * @param {*} ...setVmParams  可以传递多个参数，将会传递给setVm用以切换指向的组件实例
+   * @returns 切换的组件实例对象
+   */
+  setRouteVm(index = 0, ...setVmParams){
+    if(setVmParams.length === 0){
+      // 默认会将$vm指向新路由对应的组件
+      setVmParams = [0]
+    }
     data.currentRouteIndex = index;
     data._currentRouteKey = data.routeVmList[index].key;
-    return data.setVm(0);
+    return data.setVm(...setVmParams);
   },
   setDegger(name){
     // $vm[name] = new Proxy($vm[name], {
@@ -95,7 +109,7 @@ export let data = {
     //   }
     // })
     let changes = [];
-    _data.changeKey = changes;
+    data.changeKey = changes;
     $vm.$watch(name,(newVal,oldVal)=>{
       changes.push({
         newVal,
@@ -118,10 +132,12 @@ Object.defineProperty(data, 'customClass', {
     return data.pluginKey + '-msgbox'
   }
 })
-window._data = data;
-if(window.vmDebugPlugin){
-  vmDebugPlugin._data = data;
-}
+window._vmDebugger = data;
+// setTimeout(()=>{
+//   if(window.vmDebugPlugin && window.data){
+//     vmDebugPlugin.data = data;
+//   }
+// }, 3000)
 // $vm指向的key
 Object.defineProperty(data,'currentVueInstanceKey',{
   get(){
@@ -144,6 +160,12 @@ Object.defineProperty(data,'currentVueInstanceKey',{
      
   }
 })
+// 当前路由处理者
+Object.defineProperty(data,'currentRouteHander',{
+  get(){
+    return data.routeVmList[data.currentRouteIndex] || {}
+  }
+})
 // 获取当前路由组件ids
 Object.defineProperty(data,'currentIds',{
   get(){
@@ -157,12 +179,7 @@ Object.defineProperty(data,'currentVmMap',{
     return data.currentRouteHander.vmMap || new Map()
   }
 })
-// 当前路由处理者
-Object.defineProperty(data,'currentRouteHander',{
-  get(){
-    return data.routeVmList[data.currentRouteIndex] || {}
-  }
-})
+
 // 当前的路由key 路由改变同步更新 当前page实例：currentPageVm 当前page索引 currentPageVmIndex 当前$vm指向 currentVueInstanceKey
 Object.defineProperty(data,'currentRouteKey',{
   get(){

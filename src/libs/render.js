@@ -63,7 +63,8 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
             height: '40px'
         },
         [`${customClass} .${pluginKey}-link`]: {
-            color: '#ccc'
+            color: '#ccc',
+            cursor: 'pointer'
         },
         [`${customClass} .${pluginKey}-link span.actived`]: {
             color: '#409EFF'
