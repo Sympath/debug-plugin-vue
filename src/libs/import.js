@@ -213,6 +213,7 @@ class PageVmHandler {
     this.reset = () => {
       this.ids = [] // 对应的所有已挂载组件的组件id
       this.pageVm = pageVm; // 页面组件
+      this.renderObj = {}; // value label children
       this.pageVmId = pageVm._uid; // 页面组件id
       this.key = key; // 路由key
       this.index = index; // 几级路由 从0开始
@@ -227,7 +228,8 @@ class PageVmHandler {
    */
   init(cutId) {
     this.reset()
-    this.registerComp(cutId)
+    this.registerComp(cutId);
+    this.formatRender();
   }
   // 收集后代组件，存于收集中心vmMap
   registerComp(cutId) {
@@ -296,6 +298,32 @@ class PageVmHandler {
     }
     _registerComp(this.pageVm,'page')
   }
+
+  formatRender(){
+    function formatRenderObj(vm) {
+      let renderObj = {}; // value label children
+      let compName = getCompName(vm);
+      renderObj.label = compName;
+      renderObj.value = vm;
+      renderObj.children = [];
+      return renderObj;
+    }
+    let rootRenderObj = formatRenderObj(this.pageVm);
+
+    function _formatRender(compInstances, farRenderObj) { 
+      return (compInstances || []).map(vm => {
+        if (noNeedResolveComp(vm)) {
+          farRenderObj.children.push(..._formatRender(vm.$children,farRenderObj))
+        }else {
+          let renderObj = formatRenderObj(vm);
+          renderObj.children = _formatRender(vm.$children,renderObj)
+        }
+      })
+    }
+    rootRenderObj.children = _formatRender(this.pageVm.children, rootRenderObj);
+    this.renderObj = rootRenderObj;
+  }
+
   /**
    * 查看是否匹配
    * @param {*} type 对比的key是什么  ： index key
