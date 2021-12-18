@@ -1,14 +1,15 @@
 import { eachObj, getFilePath, getVal, tf } from "../../util";
 import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
-import { data, getVmByKey } from "./import";
+import { data } from "./import";
 import { elDialogDrag } from "./drag";
-import { genDropDown } from "../comps/gen";
-
+import inputRender from "../comps/el-input-dynamic";
+import textAreaRender from "../comps/el-textarea-dynamic";
 
 let Vue;
 let h; // 用于存储$createElement函数
 let hasElementUI; // 用户传递的配置项
 let delay = 1000;
+let treeNode = {};
 // 初始化时渲染插件所要渲染的组件  main入口函数
 function renderVmDebugPlugin(_Vue,_hasElementUI) {
     Vue = _Vue;
@@ -35,8 +36,18 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
             // margin: 'auto'
         },
 
+        [`${customClass} .${boxClass}__container`]: {
+            height: '100%'
+          },
+        [`${customClass} .el-container`]: {
+            height: '100%'
+          },
+        [`${customClass} .${boxClass}__content`]: {
+            height: '100%'
+          },
         [`${customClass} .${boxClass}__message`]: {
-            position: 'relative'
+            position: 'relative',
+            height: '100%'
           },
 
          
@@ -44,6 +55,14 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
             position: 'absolute',
             right: 0,
             [`z-index`]: '1'
+          },
+          [`${customClass}  .el-aside`]: {
+            'background-color': '#D3DCE6',
+            'color': '#333',
+            'text-align':'center',
+          },
+          [`${customClass}  .el-tree`]: {
+            'background-color': '#D3DCE6'
           },
             // 关闭弹窗按钮样式
         [`${customClass} .${boxClass}__btns.is-overflow`] : {
@@ -107,7 +126,7 @@ export function renderChooseBtn(){
         class : 'vm_debug_class',
         on:{
         click(){
-            if (data.currentVmMap.size > 0) {
+            if (data.routeVmList.length > 0) {
                 if (!data.showPhanel) {
                     data.showPhanel = true;
                     renderChoosePhanel()
@@ -144,12 +163,7 @@ export function renderChooseBtn(){
 export function renderChoosePhanel(){
 // 保存createElement函数
 if(!h){
-    // if(data.mappChannelInstance){
-
-    //     h = data.mappChannelInstance ? data.mappChannelInstance.$createElement : ()=>{ console.log('未获取h函数');};
-    // }else {
-    //     h = data.currentPageVm ? data.currentPageVm.$createElement : ()=>{ console.log('未获取h函数');};
-    // }
+   
     h = data.h;
 }
 // 如果有ui框架 就美化一下吧~
@@ -160,134 +174,75 @@ if (hasElementUI) {
 }
 
 
-function wrapTooltip(vnode,tipProps = {},other = {}) {
-    tipProps.content = getVal(tipProps,'tip','暂无提示内容').result;
-    tipProps.placement = getVal(tipProps,'placement','top').result;
-    tipProps.effect = getVal(tipProps,'effect','light').result;
-    tipProps.effect = getVal(tipProps,'effect','light').result;
-    tipProps['open-delay'] = getVal(tipProps,'delay',delay).result;
-
-    return h('el-tooltip', {
-        props:{
-            ...tipProps
-        },
-        ...other
-    },[vnode])
-}
 function _renderChoosePhanelForElement(){
     data._currentRouteKey = data.currentRouteKey;
-    function getCompList(vmMap,routeKey="") {
-        let children = [];
-        let span = 24/Object.keys(vmMap).length;
-        let tipProps = {};
-        eachObj(vmMap,(vmKey,vmComp)=>{
-            let showClothTimer;
-            let flag = false;
-            let tip = getFilePath(vmMap.get(vmKey));
-            let id = `${routeKey}--${vmKey}`;
-            // 是否展示没有文件地址的组件 本地开发环境时 第三方依赖没有文件地址；线上环境，所有组件都没有文件地址
-            if (data.filterDepends && tip === '未查询到路径') {
-                return;
-            }
-            children.push(
-            <el-col  
-                    label={vmKey}
-                    span={12}
-                    key={vmKey}
-                    style= {
-                        {
-                            textAlign: 'center'
-                        }
-                    }
-                >
-                    
-                    <el-tooltip 
-                        content={tip || '暂无提示内容'}
-                        placement={getVal(tipProps,'placement','top').result}
-                        effect = {getVal(tipProps,'effect','light').result}
-                        effect = {getVal(tipProps,'effect','light').result}
-                        openDelay = {getVal(tipProps,'delay',delay).result}
-                        id = {id}
-                        class={ id === data._currentVmkey ? `vm-link actived` : `vm-link`}
-                        >
-                        <el-link 
-                        underline={false} 
-                        type="text"  
-                        onClick = {()=>{
-                            setVm(vmKey)
-                            notice(`设置成功，当前$vm指向:  ${routeKey}的${ vmKey }`)
-                        }}
-                        ><span
-                        onMouseenter={(e)=>{
-                            if(vmKey.indexOf('Dialog') === -1){
-                                showClothTimer = setTimeout(()=>{
-                                    setMask(getVmByKey(vmKey).$el)
-                                    flag = true;
-                                },delay);
-                            }
-                            
-                            return false;
-                        }}
-                        onMouseleave={()=>{
-                            if(vmKey.indexOf('Dialog') === -1){
-                                clearTimeout(showClothTimer);
-                                if(flag){
-                                    removeMask()
-                                    flag = false
-                                }
-                            }
-                        }}
-                        >{vmKey}</span>
-                        </el-link>
-                        </el-tooltip>
-                    </el-col>
-            )
-        })
-        return children;
+    function generateLayout(header,content, layoutAside,layoutPlugin) {
+        return (
+            <el-container>
+                <el-aside width="200px">{layoutAside}</el-aside>
+                <el-container>
+                    <el-header>{header}</el-header>
+                    <el-main>{content}</el-main>
+                </el-container>
+            </el-container>
+        )
     }
-    function generateRowComponent(children, props = {}){
-        return <el-row
-        {...props}
-        >
-            {children}
-        </el-row>
-    }
-    function generateLayout(header,content, layoutFooter,layoutPlugin) {
-        return h('div', {},[
-            layoutPlugin,
-            // h('el-aside', {
-            //   width: '200px'
-            // },[layoutAsider]),
-            h('el-main', {},[content])
-
-        ])
-    }
-    // 目前未用上
     function generateLayoutHeader() {
-        return h('span', {
-        },'头部带扩充区域')
+        let searchHandler = (filterText)=>{
+            treeNode.componentInstance.filter(filterText);
+        }
+        return (
+            inputRender(h,{
+                keyWord:"",
+                label: '过滤搜索',
+                placeholder:'支持组件名部分输入',
+                eventHandler:searchHandler
+            })
+        )
     }
-    // 目前未用上
-    function generateLayoutFooter() {
-        // 顶部功能按钮
-        let children = [h('el-button',{
-          on: {
-              click(){
-                  
-              }
-          }
-      },'待完成功能项')];
-        let content = children.map(c => h(
-            'el-col',{
-                props: {
-                    span: 6
-                }
-            },
-            [c]
-        ))
-        return h('el-row', {
-            gutter: 20
-        },content)
+    function generateLayoutContent() {
+        let textAreaProps = {
+            id: 0,
+            rows:2,
+            placeholder:"执行log，当前选中的组件为this",
+            keyWord: ''
+        }
+        let textAreaMethodProps = {
+            id: 1,
+            rows:2,
+            placeholder:"可以输入vue格式的methods",
+            keyWord: ''
+        }
+        return (
+            <div>
+                <h1>控制台打印执行区 <el-button onClick={()=>{
+                    let func = new Function(`console.log(${textAreaProps.keyWord})`);
+                    func.call(window.$vm)
+            }}>执行语句</el-button></h1>
+                {textAreaRender(h,
+                textAreaProps
+            )}
+             <h1>方法执行区 <el-button onClick={()=>{
+                 let regex = /(?<methodName>\w+)\((?<paramsStr>.*)\)/
+                 let {
+                    methodName,
+                    paramsStr
+                 } = regex.exec(textAreaMethodProps.keyWord).groups;
+                 let params = paramsStr.split(',');
+                 let newParamsStr = paramsStr;
+                 if(window.$vm[params[0]]){
+                    newParamsStr = params.map(param=>`this.${param}`).join(',');
+                 }
+                console.log(newParamsStr,methodName);
+                let func = new Function( `this.${methodName}(${newParamsStr})`);
+                func.call(window.$vm)
+            }}>执行方法</el-button></h1>
+                {textAreaRender(h,
+                textAreaMethodProps
+            )}
+            </div>
+        )
+      
     }
     function generateLayoutPlugin() {
         return (
@@ -300,69 +255,97 @@ function _renderChoosePhanelForElement(){
             > 重置 </el-button>
         )
     }
-    function generateLayoutContent() {
-           let tabPannels = data.routeVmList.map((routeVm,index) =>  {
-            let compList = [];
-            compList = getCompList(routeVm.vmMap,routeVm.key)
-            routeVm.domList = compList;
-            let content = generateRowComponent(compList,{
-                gutter:20
-            })
+    function generateLayoutAside() {
+        let options = data.routeVmList.map((routeVm,index) =>  routeVm.renderObj);
+        function renderContentHandler(h, { node, data, store }) {
+            let tipProps = {};
+            let vmKey = node.label;
+            let vm = node.data.vm;
+            let tip = getFilePath(vm)
+            let showClothTimer;
+            let flag = false;
+            return (
+                <el-tooltip 
+                content={tip || '暂无提示内容'}
+                placement={getVal(tipProps,'placement','top').result}
+                effect = {getVal(tipProps,'effect','light').result}
+                effect = {getVal(tipProps,'effect','light').result}
+                openDelay = {getVal(tipProps,'delay',delay).result}
+                >
+                <el-link 
+                underline={false} 
+                type="text"  
+                ><span
+                onMouseenter={(e)=>{
+                    if(vmKey.indexOf('Dialog') === -1){
+                        showClothTimer = setTimeout(()=>{
+                            setMask(vm.$el)
+                            flag = true;
+                        },delay);
+                    }
+                    
+                    return false;
+                }}
+                onMouseleave={()=>{
+                    if(vmKey.indexOf('Dialog') === -1){
+                        clearTimeout(showClothTimer);
+                        if(flag){
+                            removeMask()
+                            flag = false
+                        }
+                    }
+                }}
+                >{vmKey}</span>
+                </el-link>
+                </el-tooltip>
+              );
+          }
+        function filterNodeHandler(value, data) {
+            if (!value) return true;
+            return data.label.indexOf(value) !== -1;
+        }
+        function checkHandler(nodeData) {
+            let {label,id,vm} = nodeData;
+            console.log(nodeData);
+            window.$vm = vm;
+            treeNode.componentInstance.setCheckedKeys([id]);
+        }
+        function resetCheckedHandler(params) {
+            treeNode.componentInstance.setCheckedKeys([]);
+        }
+        treeNode = ( 
+        <el-tree
+                class="filter-tree"
+                data={options}
+                props={{
+                    children: 'children',
+                    label: 'label'
+                }}
+                node-key="id"
+                check-strictly
+                show-checkbox
+                accordion
+                renderContent={renderContentHandler}
+                filter-node-method={filterNodeHandler}
+                onCheck={checkHandler}
+                ref="tree">
+            </el-tree>)
             
-            return {
-                content,
-                props: {
-                    label: routeVm.key,
-                    name: routeVm.key,
-                }
-            }
-        })
         return (
-          <el-tabs 
-            value={
-                tabPannels[tabPannels.length - 1].props.label
-            }  
-            tab-position="left"
-            stretch={true}
-            on-tab-click={
-                (item)=>{
-                    if(data) data['currentRouteKey'] = item.name
-                }
-            }  
-            >
-              {
-                  tabPannels.map(item=>{
-                    let {props={},content} = item;
-                    return (
-                        <el-tab-pane 
-                            label={props.label}
-                            name={props.name}
-                            key={props.name}>{content}</el-tab-pane>
-                    )
-                })
-              }
-          </el-tabs>
+            <div>
+                {<h1 style="cursor:pointer">组件树 | 点击查看插件描述</h1>}
+                {treeNode}
+            </div>
         )
       }
     let layoutHeader = generateLayoutHeader();
     let layoutContent = generateLayoutContent();
-    // generateTabs({
-    //     props: {
-    //         // type: 'border-card',
-    //         stretch: 'true',
-    //         'tab-position':"left"
-    //     },
-    //     events: {
-            
-    //     },
-    //     children
-    // },data,'currentRouteKey')
-    let layoutFooter = generateLayoutFooter();
+    let layoutAside = generateLayoutAside();
     let layoutPlugin = generateLayoutPlugin();
-    let message = generateLayout(layoutHeader,layoutContent, layoutFooter, layoutPlugin);
+    let message = generateLayout(layoutHeader,layoutContent, layoutAside, layoutPlugin);
     
     Vue.prototype.$msgbox({ 
-        title: '左为路由，右为对应组件列表',
+        title: '一级树节点为路由，子节点为对应组件列表',
         message,
         customClass: 'vm-msgbox',
         showCancelButton: false,
@@ -389,9 +372,6 @@ function _renderChoosePhanelForElement(){
         [`${data.customClass}`]: {
             width: `${data.msgboxWidth}px!important`,
             height: `${data.msgboxHeight}px!important;`
-            // bottom: '0',
-            // right: '0',
-            // margin: 'auto'
         }})
     setTimeout(() => {
         elDialogDrag('vm-msgbox')

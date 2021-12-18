@@ -1,4 +1,4 @@
-import { callFn, deWeight, eachObj, getVal, nextTick, nextTickForImmediately, nextTickForSetTime, reTry, setActive, tf, typeCheck } from "../../util";
+import { callFn, deWeight, eachObj, getVal, isVueComp, nextTick, nextTickForImmediately, nextTickForSetTime, reTry, setActive, tf, typeCheck } from "../../util";
 
 
 let getMappWinodow; // 用户传来的配置项
@@ -218,6 +218,7 @@ class PageVmHandler {
       this.key = key; // 路由key
       this.index = index; // 几级路由 从0开始
       this.vmMap = new Map(); // 对应的收集中心
+      this.allVmMap = new Map(); // 所有组价的收集中心
     }
     this.reset()
   }
@@ -228,8 +229,8 @@ class PageVmHandler {
    */
   init(cutId) {
     this.reset()
-    this.registerComp(cutId);
-    this.formatRender();
+    // this.registerComp(cutId);
+    this.formatRender(cutId);
   }
   // 收集后代组件，存于收集中心vmMap
   registerComp(cutId) {
@@ -299,28 +300,42 @@ class PageVmHandler {
     _registerComp(this.pageVm,'page')
   }
 
-  formatRender(){
-    function formatRenderObj(vm) {
+  formatRender(cutId){
+    let formatRenderObj = (vm) => {
       let renderObj = {}; // value label children
       let compName = getCompName(vm);
       renderObj.label = compName;
-      renderObj.value = vm;
+      renderObj.value = vm._uid;
+      renderObj.id = vm._uid;
+      renderObj.vm = vm;
       renderObj.children = [];
+      this.allVmMap.set(compName,vm)
       return renderObj;
     }
-    let rootRenderObj = formatRenderObj(this.pageVm);
-
-    function _formatRender(compInstances, farRenderObj) { 
-      return (compInstances || []).map(vm => {
-        if (noNeedResolveComp(vm)) {
-          farRenderObj.children.push(..._formatRender(vm.$children,farRenderObj))
-        }else {
-          let renderObj = formatRenderObj(vm);
-          renderObj.children = _formatRender(vm.$children,renderObj)
+    function _formatRender(compInstance) {
+      let renderObj = formatRenderObj(compInstance);
+      let compChildren = [...compInstance.$children];
+      let renderObjChildren = [];
+      let index = 0;
+      while (( compChildren || []).length > index) {
+        let vm = compChildren[index];
+        index++
+        if (isVueComp(vm) && vm._uid !== cutId) {
+          if (noNeedResolveComp(vm)) {
+            compChildren.push(...(vm.$children));
+          }else {
+            renderObjChildren.push(_formatRender(vm))
+          }
         }
-      })
+      }
+      if (renderObjChildren.length > 0) {
+        renderObj.children = renderObjChildren;
+      }else {
+        delete renderObj.children
+      }
+      return renderObj;
     }
-    rootRenderObj.children = _formatRender(this.pageVm.children, rootRenderObj);
+    let rootRenderObj = _formatRender(this.pageVm);
     this.renderObj = rootRenderObj;
   }
 

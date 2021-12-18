@@ -17,6 +17,13 @@ function delDeep(obj){
   })
 }
 
+export function isVueComp(vm) {
+  if (typeCheck('Object')(vm) && vm._uid) {
+    return true
+  }
+  return false;
+}
+
 /**
  * 遍历对象 直接获取key value  （不会遍历原型链  forin会）
  * @param {*} obj 被遍历对象
