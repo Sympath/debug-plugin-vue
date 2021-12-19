@@ -216,9 +216,36 @@ export function nextTickFoDelay(cb, delay = 500) {
 
 }
 
-
-
-export function getFilePath(compsInstance) {
+/**
+ * 获取组件实例上用户自定义的函数
+ * @param {*} compsInstance 
+ * @returns 返回由方法名组成的数组
+ */
+export function getMethodsByVm(compsInstance) {
+  let methods = []
+   /**
+             * 需要的函数 通过这个方法去排除vue的内部函数
+             * @param {*} fnName 
+             * @returns 
+             */
+    function legalFn(fnName) {
+      return ['_','$'].every(sensitiveWord => {
+          return fnName.indexOf(sensitiveWord) === -1
+      })
+    }
+    eachObj(compsInstance, (key,val) => {
+        if(typeCheck('Function')(val) && legalFn(key)){
+            methods.push(key)
+        }
+    })
+    return methods;
+}
+/**
+ * 获取组件实例对应的文件地址
+ * @param {*} compsInstance 
+ * @returns 返回文件地址字符串
+ */
+export function getFilePathByVm(compsInstance) {
   let filePath;
   let filePathInfo = getVal(compsInstance,`$options.__file`);
   // if(text == 'page'){

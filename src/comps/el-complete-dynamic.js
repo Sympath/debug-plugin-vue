@@ -18,6 +18,7 @@ function autocompleteRender(h,props) {
     window.renderData = {
       suggests: [] // 建议列表
     }
+    
     let showSuggest = false;
     Object.defineProperty(renderData, 'showSuggest', {
         get(){
@@ -41,6 +42,9 @@ function autocompleteRender(h,props) {
               props.keyWord = d.label;
               inputDom.value = d.label;
               renderData.showSuggest = false;
+              if (iconEmit) {
+                icon.clickHandler(props.keyWord)
+              }
             }}
             id="el-autocomplete-3571-item-0" role="option" class="">
             {d.label}
@@ -66,6 +70,7 @@ function autocompleteRender(h,props) {
     let {
         id = Math.random(),
         icon,
+        iconEmit, // 点击建议框后同时触发icon事件
         label,
         placeholder,
         querySearch
@@ -73,6 +78,16 @@ function autocompleteRender(h,props) {
     let iconType;
     let iconClickHandler;
     let inputDom;
+    let keyWord = ''
+    Object.defineProperty(props, 'keyWord', {
+      get(){
+        return keyWord
+      },
+      set(newVal){
+        keyWord = newVal
+        inputDom.value = newVal
+      }
+    })
     if (icon) {
       iconType = icon.type;
       iconClickHandler = icon.clickHandler;
@@ -87,7 +102,6 @@ function autocompleteRender(h,props) {
     setTimeout(() => {
         inputDom = document.querySelector(`#autocomplete${id}`);
         inputDom.addEventListener('input', function(e) {
-          console.log(111);
             props.keyWord = e.target.value;
             let querySearchWrap = ()=>{
               querySearch(props.keyWord, handleFilterData)

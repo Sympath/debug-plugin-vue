@@ -1,4 +1,4 @@
-import { eachObj, getFilePath, getVal, tf, typeCheck } from "../../util";
+import { eachObj, getFilePathByVm, getMethodsByVm, getVal, tf, typeCheck } from "../../util";
 import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
 import { data } from "./import";
 import { elDialogDrag } from "./drag";
@@ -42,6 +42,9 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
           },
         [`${customClass} .el-container`]: {
             height: '100%'
+          },
+        [`${customClass} .el-collapse-item__wrap`]: {
+            overflow: 'visible'
           },
         [`${customClass} .el-input__suffix`]: {
             cursor: 'pointer'
@@ -101,7 +104,6 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
 
 // 找到当前调试的路由页面组件 然后再进行切换
 function setVm(key = 'page') {
-
     data.currentVueInstanceKey = key
 }
 
@@ -180,17 +182,10 @@ if (hasElementUI) {
 
 function _renderChoosePhanelForElement(){
     data._currentRouteKey = data.currentRouteKey;
-    function generateLayout(header,content, layoutAside,layoutPlugin) {
-        return (
-            <el-container>
-                <el-aside width="200px">{layoutAside}</el-aside>
-                <el-container>
-                    <el-header>{header}</el-header>
-                    <el-main>{content}</el-main>
-                </el-container>
-            </el-container>
-        )
-    }
+    /** 头部信息
+     * 
+     * @returns 
+     */
     function generateLayoutHeader() {
         let searchHandler = (filterText)=>{
             console.log(filterText);
@@ -209,108 +204,215 @@ function _renderChoosePhanelForElement(){
             inputRender(h,searchProps)
         )
     }
-    function generateLayoutContent() {
-        let getInfoInputHandler = (name)=>{
-           console.log(window.$vm[name]);
-           let answer = ''
-           
-           if(typeCheck('Object')(window.$vm[name])){
-               window.dataObj = window.$vm[name]
-               answer = JSON.stringify(window.$vm[name])
-           }else {
-            answer = window.$vm[name];
-           }
-           getInfoInputProps.keyWord = answer;
+    /**内容区域
+     * 
+     * @returns 
+     */
+    function generateLayoutContent() {  
+        /** 格式为 【label：】value  slot 行结构
+         * 
+         * @param {*} label 
+         * @param {*} value 
+         * @param {*} slot 
+         * @returns 
+         */
+        function row(label, value, slot) {
+            return (<p>
+                <b>{label}：</b>
+                <span>{value}</span>
+                {slot}
+            </p>)
         }
-        let getInfoInputProps = {
-            id: 1,
-            placeholder:'属性值'
+        /** 信息展示区：展示当前组件实例对应的一些信息
+         * 
+         * @returns 
+         */
+        function renderInfoPanel() {
+            let infos = [{
+                label: '对应文件路径',
+                value: getFilePathByVm($vm)
+            }, {
+                label: '组件方法名',
+                value: getMethodsByVm($vm).join(',')
+            }]
+            let content = infos.map(info => {
+                let {label, value} = info
+                return (
+                    row(label, value)
+                )
+            })
+            return (
+                <div>
+                   {content}
+                </div>
+            )
         }
-        let getCompleteInfoInputProps = {
-            id: 0,
-            keyWord:"",
-            label: '获取属性对应值',
-            placeholder:'请输入属性名',
-            icon:{
-                clickHandler:getInfoInputHandler,
-                type: 'right'
-            },
-            querySearch
-        }
-        let textAreaProps = {
-            id: 0,
-            rows:2,
-            placeholder:"执行log，当前选中的组件为this",
-            keyWord: ''
-        }
-        let textAreaMethodProps = {
-            id: 1,
-            rows:2,
-            placeholder:"可以输入vue格式的methods",
-            keyWord: ''
-        }
-        function querySearch(queryString, cb) {
-            function createFilter(queryString = 'ALL') {
-                return Object.keys(window.$vm.$data).filter(
-                   key => {
-                       if(queryString === 'ALL'){
-                           return true
-                       }else{
-                          return   key.toLowerCase().indexOf(queryString.toLowerCase()) != -1}
-                       }
-                ).map(key => ({
-                    value: key,
-                    label: key
-                }))
-              }
-            //   var restaurants = [];
-            //   eachObj(window.$vm.$data,(key, value)=>{
-            //     restaurants.push({
-            //         key, value
-            //     })
-            //   })
-            
-            var results = queryString ? createFilter(queryString) : createFilter();
-            // 调用 callback 返回建议列表的数据
-            cb(results); 
-        }
-        return (
-            <div>
-                 <h1>属性处理区：获取属性对应值 对象则会挂载在window.dataObj 上并默认打印 </h1>
+        /** 属性处理区：获取属性对应值 对象则会挂载在window.dataObj 上并默认打印
+         * 
+         * @returns 
+         */
+        function renderDataHandlerPanel() {
+            // input的配置对象
+            let getInfoInputProps = {
+                id: 1,
+                placeholder:'属性值'
+            }
+            /**
+             * icon点击事件
+             * @param {*} name 用户输入的属性名
+             */
+            let getInfoInputHandler = (name)=>{
+                console.log(window.$vm[name]);
+                let answer = ''
+                
+                if(typeCheck('Object')(window.$vm[name])){
+                    window.dataObj = window.$vm[name]
+                    answer = JSON.stringify(window.$vm[name])
+                }else {
+                 answer = window.$vm[name];
+                }
+                getInfoInputProps.keyWord = answer;
+            }
+            /**
+             * 当前组件实例对象上属性的模糊搜索处理函数
+             * @param {*} queryString 模糊搜索关键词
+             * @param {*} cb 将搜索结果传递给此回调 自动提示组件内部会用作提示列表进行渲染
+             */
+            function querySearch(queryString, cb) {
+                function createFilter(queryString = 'ALL') {
+                    return Object.keys(window.$vm.$data).filter(
+                       key => {
+                           if(queryString === 'ALL'){
+                               return true
+                           }else{
+                              return   key.toLowerCase().indexOf(queryString.toLowerCase()) != -1}
+                           }
+                    ).map(key => ({
+                        value: key,
+                        label: key
+                    }))
+                }
+                var results = queryString ? createFilter(queryString) : createFilter();
+                // 调用 callback 返回建议列表的数据
+                cb(results); 
+            }
+            // 提示input组件的配置信息
+            let getCompleteInfoInputProps = {
+                id: 0, // 可不填，会随机生成id 但一定要保证不重复
+                label: '获取属性对应值',
+                placeholder:'请输入属性名',
+                iconEmit: true,//点击建议框后同时触发icon事件
+                icon:{ // 支持传入icon属性 会生成右侧的icon
+                    clickHandler:getInfoInputHandler,
+                    type: 'right'
+                },
+                querySearch
+            }
+            return (<div>
                 {completeRender(h,getCompleteInfoInputProps)}
                 {inputRender(h,getInfoInputProps)}
-                {/* 直接执行模板中的方法 */}
-                <h1>方法执行区：直接执行模板中的方法 <el-button style="float:right;margin-bottom:10px" onClick={()=>{
-                 let regex = /(?<methodName>\w+)\((?<paramsStr>.*)\)/
-                 let {
+            </div>)
+        }
+        /** 方法执行区：直接执行模板中的方法
+         * 
+         * @returns 
+         */
+        function renderMethodExecPanel() {
+            let textAreaMethodProps = {
+                id: 1,
+                rows:2,
+                placeholder:"可以输入vue格式的methods"
+            }
+            // 执行方法
+            let execBtn = (<el-button style="float:right;margin:10px 0" onClick={()=>{
+                let regex = /(?<methodName>\w+)\((?<paramsStr>.*)\)/
+                let {
                     methodName,
                     paramsStr
-                 } = regex.exec(textAreaMethodProps.keyWord).groups;
-                 let params = paramsStr.split(',');
-                 let newParamsStr = paramsStr;
-                 if(window.$vm[params[0]]){
+                } = regex.exec(textAreaMethodProps.keyWord).groups;
+                let params = paramsStr.split(',');
+                let newParamsStr = paramsStr;
+                if(window.$vm[params[0]]){
                     newParamsStr = params.map(param=>`this.${param}`).join(',');
-                 }
-                console.log(newParamsStr,methodName);
+                }
                 let func = new Function( `this.${methodName}(${newParamsStr})`);
                 func.call(window.$vm)
-                    }}>执行方法</el-button></h1>
+                    }}>执行方法</el-button>)
+            return (<div>
                 {textAreaRender(h,
-                textAreaMethodProps
-                )}
-                {/* 在控制台中打印语句 */}
-                <h1>打印执行区：在控制台中打印语句 <el-button  style="float:right;margin-bottom:10px" onClick={()=>{
-                    let func = new Function(`console.log(${textAreaProps.keyWord})`);
-                    func.call(window.$vm)
-                    }}>执行语句</el-button></h1>
+                        textAreaMethodProps
+                        )}
+                {row(
+                    '组件方法名',
+                    getMethodsByVm($vm).join(','),
+                    execBtn
+                )}                       
+                </div>)
+        }
+        /** 打印执行区：在控制台中打印语句
+         * 
+         * @returns 
+         */
+        function renderLogPanel() {
+            let textAreaProps = {
+                id: 0,
+                rows:2,
+                placeholder:"执行log，当前选中的组件为this",
+            }
+            return (<div>
+                    
+                {/* 输入文本域 */}
                 {textAreaRender(h,
                     textAreaProps
                 )}
-            
-            </div>
+                <el-button  style="float:right;margin:10px 0" onClick={()=>{
+                let func = new Function(`console.log(${textAreaProps.keyWord})`);
+                func.call(window.$vm)
+                }}>执行语句</el-button>
+            </div>)
+        }
+        let collapseItems = [   
+            {
+                title: '信息展示区：展示当前组件实例对应的一些信息',
+                name: 1,
+                content: renderInfoPanel()
+            },
+            {
+                title: '属性处理区：获取属性对应值 对象则会挂载在window.dataObj 上并默认打印',
+                name: 2,
+                content: renderDataHandlerPanel()
+            },
+            {
+                title: '方法执行区：直接执行模板中的方法',
+                name: 3,
+                content: renderMethodExecPanel()
+            },
+            {
+                title: '打印执行区：在控制台中打印语句',
+                name: 4,
+                content: renderLogPanel()
+            }
+        ]
+        let items = collapseItems.map(item =>{
+            let {content, title,name} = item;
+            return (
+                <el-collapse-item title={title} name={name}>
+                    {content}
+                </el-collapse-item>)
+        })
+        return (
+            (
+                <el-collapse>
+                   {items}
+                </el-collapse>
+            )
         )
       
     }
+    /**插件部分 暂未使用
+     * 
+     * @returns 
+     */
     function generateLayoutPlugin() {
         return (
             <el-button
@@ -322,8 +424,8 @@ function _renderChoosePhanelForElement(){
             > 重置 </el-button>
         )
     }
-    /**
-     * 侧边栏内容  
+    /** 侧边栏内容
+     *   
      * 1. 点击查看【说明书】 抽屉组件
      * 2. 组件树结构
      * @returns 
@@ -334,7 +436,7 @@ function _renderChoosePhanelForElement(){
             let tipProps = {};
             let vmKey = node.label;
             let vm = node.data.vm;
-            let tip = getFilePath(vm)
+            let tip = getFilePathByVm(vm)
             let showClothTimer;
             let flag = false;
             return (
@@ -372,19 +474,26 @@ function _renderChoosePhanelForElement(){
                 </el-link>
                 </el-tooltip>
               );
-          }
+        }
+        /** 搜索过滤节点处理函数
+         * 
+         * @param {*} value 
+         * @param {*} data 
+         * @returns 
+         */
         function filterNodeHandler(value, data) {
             if (!value) return true;
             return data.label.indexOf(value) !== -1;
         }
+        /** 选中节点处理函数
+         * 
+         * @param {*} nodeData 
+         */
         function checkHandler(nodeData) {
             let {label,id,vm} = nodeData;
             console.log(nodeData);
             window.$vm = vm;
             treeNode.componentInstance.setCheckedKeys([id]);
-        }
-        function resetCheckedHandler(params) {
-            treeNode.componentInstance.setCheckedKeys([]);
         }
         treeNode = ( 
         <el-tree
@@ -398,6 +507,7 @@ function _renderChoosePhanelForElement(){
                 check-strictly
                 show-checkbox
                 accordion
+                default-checked-keys={[options[options.length - 1].vm._uid]} // 默认选择最内层路由
                 renderContent={renderContentHandler}
                 filter-node-method={filterNodeHandler}
                 onCheck={checkHandler}
@@ -410,7 +520,26 @@ function _renderChoosePhanelForElement(){
                 {treeNode}
             </div>
         )
-      }
+    }
+    /** 聚合所有部分，生成组件
+     * 
+     * @param {*} header 
+     * @param {*} content 
+     * @param {*} layoutAside 
+     * @param {*} layoutPlugin 
+     * @returns 
+     */
+    function generateLayout(header,content, layoutAside,layoutPlugin) {
+        return (
+            <el-container>
+                <el-aside width="200px">{layoutAside}</el-aside>
+                <el-container>
+                    <el-header style="height: auto">{header}</el-header>
+                    <el-main>{content}</el-main>
+                </el-container>
+            </el-container>
+        )
+    }
     let layoutHeader = generateLayoutHeader();
     let layoutContent = generateLayoutContent();
     let layoutAside = generateLayoutAside();
