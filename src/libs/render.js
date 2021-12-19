@@ -253,9 +253,13 @@ function _renderChoosePhanelForElement(){
          */
         function renderDataHandlerPanel() {
             // input的配置对象
-            let getInfoInputProps = {
-                id: 1,
-                placeholder:'属性值'
+            let textAreaDataValProps = {
+                id: 3,
+                rows:2,
+                placeholder:"属性值",
+                change :(val) => {
+                    $vm[getCompleteInfoInputProps.keyWord] = val
+                }
             }
             /**
              * icon点击事件
@@ -271,7 +275,7 @@ function _renderChoosePhanelForElement(){
                 }else {
                  answer = window.$vm[name];
                 }
-                getInfoInputProps.keyWord = answer;
+                textAreaDataValProps.keyWord = answer;
             }
             /**
              * 当前组件实例对象上属性的模糊搜索处理函数
@@ -304,13 +308,17 @@ function _renderChoosePhanelForElement(){
                 iconEmit: true,//点击建议框后同时触发icon事件
                 icon:{ // 支持传入icon属性 会生成右侧的icon
                     clickHandler:getInfoInputHandler,
-                    type: 'right'
+                    type: 'bottom'
                 },
                 querySearch
             }
             return (<div>
-                {completeRender(h,getCompleteInfoInputProps)}
-                {inputRender(h,getInfoInputProps)}
+                <h1 style="text-align: center">
+                    请输入属性名：{completeRender(h,getCompleteInfoInputProps)}
+                </h1>
+                {textAreaRender(h,
+                        textAreaDataValProps
+                        )}
             </div>)
         }
         /** 方法执行区：直接执行模板中的方法

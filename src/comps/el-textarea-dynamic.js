@@ -1,13 +1,30 @@
+import { typeCheck } from "../../util";
+
 function textAreaRender(h,props) {
     let {
         row,
         placeholder,
-        id
+        id,
+        change
     } = props
+    let textAreaDom;
+    let keyWord = ''
+    Object.defineProperty(props, 'keyWord', {
+      get(){
+        return keyWord
+      },
+      set(newVal){
+        keyWord = newVal
+        textAreaDom.value = newVal
+      }
+    })
     setTimeout(() => {
-        var textArea = document.querySelector(`#search-area${id}`);
-        textArea.addEventListener('input', function(e) {
+        textAreaDom = document.querySelector(`#search-area${id}`);
+        textAreaDom.addEventListener('input', function(e) {
             props.keyWord = e.target.value;
+            if (typeCheck('Function')(change)) {
+              change(e.target.value)
+            }
         })
       }, 1000);
       return (
