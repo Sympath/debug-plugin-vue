@@ -1,9 +1,10 @@
-import { eachObj, getFilePath, getVal, tf } from "../../util";
+import { eachObj, getFilePath, getVal, tf, typeCheck } from "../../util";
 import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
 import { data } from "./import";
 import { elDialogDrag } from "./drag";
 import inputRender from "../comps/el-input-dynamic";
 import textAreaRender from "../comps/el-textarea-dynamic";
+import completeRender from "../comps/el-complete-dynamic";
 
 let Vue;
 let h; // 用于存储$createElement函数
@@ -41,6 +42,9 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
           },
         [`${customClass} .el-container`]: {
             height: '100%'
+          },
+        [`${customClass} .el-input__suffix`]: {
+            cursor: 'pointer'
           },
         [`${customClass} .${boxClass}__content`]: {
             height: '100%'
@@ -136,7 +140,7 @@ export function renderChooseBtn(){
             }
         }
         }
-    },childrens:[]};
+    },children:[]};
     let div = creatDom(domOptions)
     mountToBody(div)
     // 用于解决没有使用UI框架的情况
@@ -153,7 +157,7 @@ export function renderChooseBtn(){
         class : 'vm_debug_pannel_class',
         on:{
         }
-    },childrens:[]};
+    },children:[]};
     let div2 = creatDom(domOptions2)
     mountToBody(div2)
 }
@@ -189,18 +193,50 @@ function _renderChoosePhanelForElement(){
     }
     function generateLayoutHeader() {
         let searchHandler = (filterText)=>{
+            console.log(filterText);
             treeNode.componentInstance.filter(filterText);
         }
+        let searchProps = {
+            id: 0,
+            label: '过滤搜索',
+            placeholder:'支持组件名部分输入',
+            icon:{
+                clickHandler:searchHandler,
+                type: 'search'
+            }
+        }
         return (
-            inputRender(h,{
-                keyWord:"",
-                label: '过滤搜索',
-                placeholder:'支持组件名部分输入',
-                eventHandler:searchHandler
-            })
+            inputRender(h,searchProps)
         )
     }
     function generateLayoutContent() {
+        let getInfoInputHandler = (name)=>{
+           console.log(window.$vm[name]);
+           let answer = ''
+           
+           if(typeCheck('Object')(window.$vm[name])){
+               window.dataObj = window.$vm[name]
+               answer = JSON.stringify(window.$vm[name])
+           }else {
+            answer = window.$vm[name];
+           }
+           getInfoInputProps.keyWord = answer;
+        }
+        let getInfoInputProps = {
+            id: 1,
+            placeholder:'属性值'
+        }
+        let getCompleteInfoInputProps = {
+            id: 0,
+            keyWord:"",
+            label: '获取属性对应值',
+            placeholder:'请输入属性名',
+            icon:{
+                clickHandler:getInfoInputHandler,
+                type: 'right'
+            },
+            querySearch
+        }
         let textAreaProps = {
             id: 0,
             rows:2,
@@ -213,16 +249,38 @@ function _renderChoosePhanelForElement(){
             placeholder:"可以输入vue格式的methods",
             keyWord: ''
         }
+        function querySearch(queryString, cb) {
+            function createFilter(queryString = 'ALL') {
+                return Object.keys(window.$vm.$data).filter(
+                   key => {
+                       if(queryString === 'ALL'){
+                           return true
+                       }else{
+                          return   key.toLowerCase().indexOf(queryString.toLowerCase()) != -1}
+                       }
+                ).map(key => ({
+                    value: key,
+                    label: key
+                }))
+              }
+            //   var restaurants = [];
+            //   eachObj(window.$vm.$data,(key, value)=>{
+            //     restaurants.push({
+            //         key, value
+            //     })
+            //   })
+            
+            var results = queryString ? createFilter(queryString) : createFilter();
+            // 调用 callback 返回建议列表的数据
+            cb(results); 
+        }
         return (
             <div>
-                <h1>控制台打印执行区 <el-button onClick={()=>{
-                    let func = new Function(`console.log(${textAreaProps.keyWord})`);
-                    func.call(window.$vm)
-            }}>执行语句</el-button></h1>
-                {textAreaRender(h,
-                textAreaProps
-            )}
-             <h1>方法执行区 <el-button onClick={()=>{
+                 <h1>属性处理区：获取属性对应值 对象则会挂载在window.dataObj 上并默认打印 </h1>
+                {completeRender(h,getCompleteInfoInputProps)}
+                {inputRender(h,getInfoInputProps)}
+                {/* 直接执行模板中的方法 */}
+                <h1>方法执行区：直接执行模板中的方法 <el-button style="float:right;margin-bottom:10px" onClick={()=>{
                  let regex = /(?<methodName>\w+)\((?<paramsStr>.*)\)/
                  let {
                     methodName,
@@ -236,10 +294,19 @@ function _renderChoosePhanelForElement(){
                 console.log(newParamsStr,methodName);
                 let func = new Function( `this.${methodName}(${newParamsStr})`);
                 func.call(window.$vm)
-            }}>执行方法</el-button></h1>
+                    }}>执行方法</el-button></h1>
                 {textAreaRender(h,
                 textAreaMethodProps
-            )}
+                )}
+                {/* 在控制台中打印语句 */}
+                <h1>打印执行区：在控制台中打印语句 <el-button  style="float:right;margin-bottom:10px" onClick={()=>{
+                    let func = new Function(`console.log(${textAreaProps.keyWord})`);
+                    func.call(window.$vm)
+                    }}>执行语句</el-button></h1>
+                {textAreaRender(h,
+                    textAreaProps
+                )}
+            
             </div>
         )
       
@@ -255,6 +322,12 @@ function _renderChoosePhanelForElement(){
             > 重置 </el-button>
         )
     }
+    /**
+     * 侧边栏内容  
+     * 1. 点击查看【说明书】 抽屉组件
+     * 2. 组件树结构
+     * @returns 
+     */
     function generateLayoutAside() {
         let options = data.routeVmList.map((routeVm,index) =>  routeVm.renderObj);
         function renderContentHandler(h, { node, data, store }) {
@@ -400,7 +473,7 @@ function _renderChoosePhanelForNormal() {
                 e.preventDefault()
             }
         }
-        },childrens:[]}
+        },children:[]}
         let listItem = creatDom(domOptions)
         // mountToBody(listItem)
         $mount('.vm_debug_pannel_class',listItem)
@@ -420,39 +493,5 @@ export function notice(msg,type = 'success') {
     }
 }
 
-function generateTabs(opt,target,targetKey) {
-    let {key,props = {}, style = {} , events = [],children = []} = opt;
-
-    function _genPane(list) {
-        return list.map(item=>{
-            let {props={},content} = item;
-            return h('el-tab-pane',{
-                props: {
-                    ...props,
-                    key: props.name
-                }
-            },[content])
-        })
-    }
-    let value = target ? target[targetKey] : "";
-    return h('el-tabs',{
-        props: {
-            ...props,
-            value
-        },
-        style,
-        on: {
-            ...events,
-            'tab-click':(item)=>{
-                // // console.log(item);
-                console.log(item.name);
-                if(target) target[targetKey] = item.name
-            },
-            // tabClick(){
-            //     // console.log(1111);
-            // }
-        }
-    },_genPane(children))      
-}
 
 export default renderVmDebugPlugin

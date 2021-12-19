@@ -151,7 +151,7 @@ Object.defineProperty(data,'currentVueInstanceKey',{
       data._currentVmkey = key;
       // 如果没有进行设置$vm 则切换路由不能影响当前属性 在关闭弹窗时需要设置currentRouteKey 为 _currentRouteKey
       data._currentRouteKey = data.currentRouteKey;
-      data.currentPageVm = window.$vm = data.currentVmMap.get(newVal);
+      // data.currentPageVm = window.$vm = data.currentVmMap.get(newVal);
       // 第一次的时候，因为dom还没有渲染出来，所以不会生效 但在渲染时已经进行了判断 所以高亮还是会存在
       setActive('.vm-link',`#${key}`)
     }else {
@@ -336,6 +336,10 @@ class PageVmHandler {
       return renderObj;
     }
     let rootRenderObj = _formatRender(this.pageVm);
+    // 设置默认指向最后一个路由组件
+    window.$vm = this.pageVm
+    // let allVmMapArr = Array.from(this.allVmMap);
+    // window.$vm = allVmMapArr[allVmMapArr.length - 1][1]
     this.renderObj = rootRenderObj;
   }
 
@@ -457,6 +461,7 @@ export function emitInitVmDebuPlugin(cb){
       initCbs.forEach(cb => callFn(cb))
       initCbs = [];
     }
+   
     // console.log('开始注册逻辑 发布')
     if(data.isMapp){
       clearTimeout(mappSId)

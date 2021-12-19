@@ -177,6 +177,10 @@ export function reTry(cb,props,timeout=10000) {
 
 let timeId;
 let timeCbs = [];
+/**
+ * 防抖 
+ * @param {*} cb 
+ */
 export function nextTickForSetTime(cb) {
   if(timeCbs.some(callback => callback.name === cb.name)) {
     // // console.log('重复啦');
@@ -194,6 +198,25 @@ export function nextTickForSetTime(cb) {
   }, 500);
 
 }
+let delayIdObj = {}; // key 函数名 val tId
+/**
+ * 延迟执行+防抖
+ * @param {*} cb 
+ * @param {*} delay 
+ */
+export function nextTickFoDelay(cb, delay = 500) {
+  // 看此函数对应是否已经有定时器了，有则重置再来
+  if(delayIdObj[cb.name] && delayIdObj[cb.name].timeId){
+    clearTimeout(delayIdObj[cb.name].timeId)
+  }
+  delayIdObj[cb.name] = {};
+  delayIdObj[cb.name].timeId = setTimeout(() => {
+    cb()
+  }, delay);
+
+}
+
+
 
 export function getFilePath(compsInstance) {
   let filePath;

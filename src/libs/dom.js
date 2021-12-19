@@ -1,13 +1,17 @@
 import { callFn, eachObj, getVal, typeCheck } from "../../util";
 // 挂载dom至body
-export function mountToBody(dom){
+export function mountToBody(el){
+    let dom = typeCheck('String')(el) ? document.querySelector(el) : el;
     var bo = document.body; //获取body对象.
     //动态插入到body中
     bo.insertBefore(dom, bo.lastChild);
 }
 // 类似createElement 根据虚拟dom生成真实dom
 export function creatDom(domOpts){
-    let {tag,text,opts,childrens = []} = domOpts;
+    let {tag,text,opts = {},data = {},children = []} = domOpts;
+    if (Object.keys(opts).length === 0) {
+      opts = data
+    }
                 //创建一个div
     var dom = document.createElement(tag);
     if(text){
@@ -15,16 +19,26 @@ export function creatDom(domOpts){
     }
 
     for (const key in opts) {
-      if(key === 'style'){
+      if(key === 'style' && typeCheck('Object')(opts[key])){
         let styleOpts = opts[key];
         for (const styleKey in styleOpts) {
           dom.style[styleKey] = styleOpts[styleKey]
         }
       }
+      if(key === 'style' && typeCheck('String')(opts[key])){
+        dom[key] = opts[key]
+      }
       if (key === 'class') {
         dom.className = opts[key];
       }
       if (key === 'props') {
+        let propOpts = opts[key];
+        for (const propKey in propOpts) {
+          dom[propKey] = propOpts[propKey]
+        }
+      }
+
+      if (key === 'attrs') {
         let propOpts = opts[key];
         for (const propKey in propOpts) {
           dom[propKey] = propOpts[propKey]
@@ -38,15 +52,15 @@ export function creatDom(domOpts){
         }
       }
     }
-    childrens.forEach(child => { 
-      return dom.appendChild(createElm(child));
+    children.forEach(child => { 
+      return dom.appendChild(creatDom(child));
     });
     return dom;
 }
 // 挂载指定dom
 export function $mount(el,dom){
-el = document.querySelector(el);
-el.appendChild(dom);
+  el = typeCheck('String')(el) ? document.querySelector(el) : el;
+  el.appendChild(dom);
 }
 // 清空指定dom
 export function remove_items(selector,opts = {
