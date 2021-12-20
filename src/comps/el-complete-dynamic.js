@@ -15,7 +15,7 @@ import { $mount, creatDom, mountToBody, remove_items } from "../libs/dom";
  * @returns 
  */
 function autocompleteRender(h,props) {
-    window.renderData = {
+    let renderData = {
       suggests: [] // 建议列表
     }
     

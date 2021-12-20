@@ -52,7 +52,15 @@ function noNeedResolveComp(comp){
 
   return noNeedResolve
 }
+
+export let renderData = {
+  $vm: {},
+  autocompleteRenderData : {
+    suggests: [] // 建议列表
+  }
+}
 export let data = {
+  renderData,
   firstInited: false, // 初次渲染已完成
   isMapp: false,// 是否是微应用
   _getMappWinodow: ()=>{},
@@ -102,12 +110,6 @@ export let data = {
     return data.setVm(...setVmParams);
   },
   setDegger(name){
-    // $vm[name] = new Proxy($vm[name], {
-    //   get(target, key) {
-    //     console.log('获取了getter属性');
-    //     return target[key];
-    //   }
-    // })
     let changes = [];
     data.changeKey = changes;
     $vm.$watch(name,(newVal,oldVal)=>{
@@ -337,9 +339,7 @@ class PageVmHandler {
     }
     let rootRenderObj = _formatRender(this.pageVm);
     // 设置默认指向最后一个路由组件
-    window.$vm = this.pageVm
-    // let allVmMapArr = Array.from(this.allVmMap);
-    // window.$vm = allVmMapArr[allVmMapArr.length - 1][1]
+    renderData.$vm = this.pageVm
     this.renderObj = rootRenderObj;
   }
 

@@ -1,6 +1,6 @@
-import { eachObj, getFilePathByVm, getMethodsByVm, getVal, tf, typeCheck } from "../../util";
+import { eachObj, getFilePathByVm, getMethodsByVm, getVal, isVueComp, nextTickFoDelay, tf, typeCheck } from "../../util";
 import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
-import { data } from "./import";
+import { data, renderData } from "./import";
 import { elDialogDrag } from "./drag";
 import inputRender from "../comps/el-input-dynamic";
 import textAreaRender from "../comps/el-textarea-dynamic";
@@ -11,6 +11,7 @@ let h; // 用于存储$createElement函数
 let hasElementUI; // 用户传递的配置项
 let delay = 1000;
 let treeNode = {};
+let contentRender;
 // 初始化时渲染插件所要渲染的组件  main入口函数
 function renderVmDebugPlugin(_Vue,_hasElementUI) {
     Vue = _Vue;
@@ -97,6 +98,15 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
         },
         [`${customClass} .${pluginKey}-link.actived`]: {
             color: '#409EFF'
+        }
+    })
+    Object.defineProperty(window, '$vm', {
+        get(){
+            return renderData.$vm
+        },
+        set(newVal){
+            renderData.$vm = newVal;
+            nextTickFoDelay(contentRender)
         }
     })
    
@@ -209,6 +219,7 @@ function _renderChoosePhanelForElement(){
      * @returns 
      */
     function generateLayoutContent() {  
+        
         /** 格式为 【label：】value  slot 行结构
          * 
          * @param {*} label 
@@ -552,7 +563,15 @@ function _renderChoosePhanelForElement(){
     let layoutContent = generateLayoutContent();
     let layoutAside = generateLayoutAside();
     let layoutPlugin = generateLayoutPlugin();
+    // 赋值重绘函数
+    contentRender = ()=>{
+        console.log('开始重绘');
+        if (layoutContent && isVueComp(layoutContent.componentInstance)) {
+            layoutContent.componentInstance.__patch__(layoutContent, generateLayoutContent())
+        }
+    }
     let message = generateLayout(layoutHeader,layoutContent, layoutAside, layoutPlugin);
+   
     
     Vue.prototype.$msgbox({ 
         title: '一级树节点为路由，子节点为对应组件列表',
