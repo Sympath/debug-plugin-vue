@@ -45,7 +45,7 @@ function inputRender(h,props) {
       }, 1000);
       return (
         <div data-v-01f94fbc="" class="el-input el-input--small el-input--suffix" style="width: 200px; position: relative;margin-left: 70px;">
-           {label? <span style="position: absolute; left: -55px;top: 50%;transform: translateY(-50%);">{label}</span> : "" }<input type="text" autocomplete="off" id={`search${id}`} placeholder={placeholder} class="el-input__inner"/>
+           {label? <span style="position: absolute; left: -65px;top: 50%;transform: translateY(-50%);">{label}</span> : "" }<input type="text" autocomplete="off" id={`search${id}`} placeholder={placeholder} class="el-input__inner"/>
            {iconType ? <span class="el-input__suffix">
                 <span class="el-input__suffix-inner">
                     <i

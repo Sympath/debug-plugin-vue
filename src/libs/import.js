@@ -20,7 +20,12 @@ function getCompName(comp) {
       compName = result;
   }
   if(typeCheck('Undefined')(compName)){
+   if (comp.$options.__file) {
+     let {fileName} = /(?<fileName>\w+).vue/.exec(comp.$options.__file).groups
+     compName = fileName
+   }else {
     compName = `getNameFailForComp${comp._uid}`;
+   }
   }
   // -转驼峰
   compName = tf(compName);
@@ -44,6 +49,9 @@ function noNeedResolveComp(comp){
   // }
   // 如果文件路径是packages说明是第三方包 则不处理
   if(getVal(comp,'$options.__file').result.startsWith('packages/')) noNeedResolve = true
+  if (getVal(comp,'$options.__file').err && data.filterDepends) {
+    noNeedResolve = true
+  }
   // if(data.isDev || getVal(comp,'$options.__file').result.startsWith('src/')){
    
   // }else {

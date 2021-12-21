@@ -553,7 +553,7 @@ function _renderChoosePhanelForElement(){
             <el-container>
                 <el-aside width="200px">{layoutAside}</el-aside>
                 <el-container>
-                    <el-header style="height: auto">{header}</el-header>
+                    <el-header>{header}</el-header>
                     <el-main>{content}</el-main>
                 </el-container>
             </el-container>
