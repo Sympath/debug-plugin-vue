@@ -153,7 +153,7 @@ function generateTableComponent(columns,list){
 }
 function generateLayoutPlugin(plugins = ['search-plugin']) {
   let pluginDoms = plugins.map(pluginName => {
-    if (typeCheck('Function')(vuexData.pluginMap[pluginName]) && typeCheck('Function')(vuexData.pluginMap[pluginName].plugin)) {
+    if (vuexData.pluginMap[pluginName] && typeCheck('Function')(vuexData.pluginMap[pluginName].plugin)) {
       return vuexData.pluginMap[pluginName].plugin(h,notice)
     }
     return ""
