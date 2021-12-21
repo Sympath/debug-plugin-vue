@@ -5,6 +5,10 @@ import { elDialogDrag } from "./drag";
 import inputRender from "../comps/el-input-dynamic";
 import textAreaRender from "../comps/el-textarea-dynamic";
 import completeRender from "../comps/el-complete-dynamic";
+import renderInfoPanelPlugin from "../plugins/infoShowPanel";
+import renderDataHandlerPanelPlugin from "../plugins/dataHandlerPanel";
+import renderMethodExecPanelPlugin from "../plugins/methodExecPanel";
+import renderLogPanelPlugin from "../plugins/renderLogPanel";
 
 let Vue;
 let h; // 用于存储$createElement函数
@@ -218,200 +222,20 @@ function _renderChoosePhanelForElement(){
      * 
      * @returns 
      */
-    function generateLayoutContent() {  
-        
-        /** 格式为 【label：】value  slot 行结构
-         * 
-         * @param {*} label 
-         * @param {*} value 
-         * @param {*} slot 
-         * @returns 
-         */
-        function row(label, value, slot) {
-            return (<p>
-                <b>{label}：</b>
-                <span>{value}</span>
-                {slot}
-            </p>)
-        }
-        /** 信息展示区：展示当前组件实例对应的一些信息
-         * 
-         * @returns 
-         */
-        function renderInfoPanel() {
-            let infos = [{
-                label: '对应文件路径',
-                value: getFilePathByVm($vm)
-            }, {
-                label: '组件方法名',
-                value: getMethodsByVm($vm).join(',')
-            }]
-            let content = infos.map(info => {
-                let {label, value} = info
-                return (
-                    row(label, value)
-                )
+    function generateLayoutContent() { 
+        let plugins = [
+            renderInfoPanelPlugin,
+            renderDataHandlerPanelPlugin,
+            renderMethodExecPanelPlugin,
+            renderLogPanelPlugin
+        ]    
+        let collapseItems = plugins.map(
+            (plugin, index) => ({
+                title: plugin.title,
+                name: index,
+                content: plugin.render(h, $vm, index)
             })
-            return (
-                <div>
-                   {content}
-                </div>
-            )
-        }
-        /** 属性处理区：获取属性对应值 对象则会挂载在window.dataObj 上并默认打印
-         * 
-         * @returns 
-         */
-        function renderDataHandlerPanel() {
-            // input的配置对象
-            let textAreaDataValProps = {
-                id: 3,
-                rows:2,
-                placeholder:"属性值",
-                change :(val) => {
-                    $vm[getCompleteInfoInputProps.keyWord] = val
-                }
-            }
-            /**
-             * icon点击事件
-             * @param {*} name 用户输入的属性名
-             */
-            let getInfoInputHandler = (name)=>{
-                console.log(window.$vm[name]);
-                let answer = ''
-                
-                if(typeCheck('Object')(window.$vm[name])){
-                    window.dataObj = window.$vm[name]
-                    answer = JSON.stringify(window.$vm[name])
-                }else {
-                 answer = window.$vm[name];
-                }
-                textAreaDataValProps.keyWord = answer;
-            }
-            /**
-             * 当前组件实例对象上属性的模糊搜索处理函数
-             * @param {*} queryString 模糊搜索关键词
-             * @param {*} cb 将搜索结果传递给此回调 自动提示组件内部会用作提示列表进行渲染
-             */
-            function querySearch(queryString, cb) {
-                function createFilter(queryString = 'ALL') {
-                    return Object.keys(window.$vm.$data).filter(
-                       key => {
-                           if(queryString === 'ALL'){
-                               return true
-                           }else{
-                              return   key.toLowerCase().indexOf(queryString.toLowerCase()) != -1}
-                           }
-                    ).map(key => ({
-                        value: key,
-                        label: key
-                    }))
-                }
-                var results = queryString ? createFilter(queryString) : createFilter();
-                // 调用 callback 返回建议列表的数据
-                cb(results); 
-            }
-            // 提示input组件的配置信息
-            let getCompleteInfoInputProps = {
-                id: 0, // 可不填，会随机生成id 但一定要保证不重复
-                label: '获取属性对应值',
-                placeholder:'请输入属性名',
-                iconEmit: true,//点击建议框后同时触发icon事件
-                icon:{ // 支持传入icon属性 会生成右侧的icon
-                    clickHandler:getInfoInputHandler,
-                    type: 'bottom'
-                },
-                querySearch
-            }
-            return (<div>
-                <h1 style="text-align: center">
-                    请输入属性名：{completeRender(h,getCompleteInfoInputProps)}
-                </h1>
-                {textAreaRender(h,
-                        textAreaDataValProps
-                        )}
-            </div>)
-        }
-        /** 方法执行区：直接执行模板中的方法
-         * 
-         * @returns 
-         */
-        function renderMethodExecPanel() {
-            let textAreaMethodProps = {
-                id: 1,
-                rows:2,
-                placeholder:"可以输入vue格式的methods"
-            }
-            // 执行方法
-            let execBtn = (<el-button style="float:right;margin:10px 0" onClick={()=>{
-                let regex = /(?<methodName>\w+)\((?<paramsStr>.*)\)/
-                let {
-                    methodName,
-                    paramsStr
-                } = regex.exec(textAreaMethodProps.keyWord).groups;
-                let params = paramsStr.split(',');
-                let newParamsStr = paramsStr;
-                if(window.$vm[params[0]]){
-                    newParamsStr = params.map(param=>`this.${param}`).join(',');
-                }
-                let func = new Function( `this.${methodName}(${newParamsStr})`);
-                func.call(window.$vm)
-                    }}>执行方法</el-button>)
-            return (<div>
-                {textAreaRender(h,
-                        textAreaMethodProps
-                        )}
-                {row(
-                    '组件方法名',
-                    getMethodsByVm($vm).join(','),
-                    execBtn
-                )}                       
-                </div>)
-        }
-        /** 打印执行区：在控制台中打印语句
-         * 
-         * @returns 
-         */
-        function renderLogPanel() {
-            let textAreaProps = {
-                id: 0,
-                rows:2,
-                placeholder:"执行log，当前选中的组件为this",
-            }
-            return (<div>
-                    
-                {/* 输入文本域 */}
-                {textAreaRender(h,
-                    textAreaProps
-                )}
-                <el-button  style="float:right;margin:10px 0" onClick={()=>{
-                let func = new Function(`console.log(${textAreaProps.keyWord})`);
-                func.call(window.$vm)
-                }}>执行语句</el-button>
-            </div>)
-        }
-        let collapseItems = [   
-            {
-                title: '信息展示区：展示当前组件实例对应的一些信息',
-                name: 1,
-                content: renderInfoPanel()
-            },
-            {
-                title: '属性处理区：获取属性对应值 对象则会挂载在window.dataObj 上并默认打印',
-                name: 2,
-                content: renderDataHandlerPanel()
-            },
-            {
-                title: '方法执行区：直接执行模板中的方法',
-                name: 3,
-                content: renderMethodExecPanel()
-            },
-            {
-                title: '打印执行区：在控制台中打印语句',
-                name: 4,
-                content: renderLogPanel()
-            }
-        ]
+        )
         let items = collapseItems.map(item =>{
             let {content, title,name} = item;
             return (
