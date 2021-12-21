@@ -1,11 +1,15 @@
 import { callFn, deWeight, eachObj, getApiByService, getStateByType, getVal, mergeArr, nextTick, nextTickForImmediately, nextTickForSetTime, reTry, setActive, tf, typeCheck } from "../util/index";
 // import { genInput } from "../../util/eleUtil";
-import cachePlugin from "../plugins/cachePlugin";
-import cacheApplyPlugin from "../plugins/cacheServicePlugin";
-// import dragPlugin from "../plugins/dragPlugin";
-import moduleHandlerPlugin from "../plugins/moduleHandlerPlugin";
-import searchPlugin from "../plugins/searchPlugin";
-import searchServicePlugin from "../plugins/searchServicePlugin";
+
+import {
+  addPlugin,
+  cachePlugin,
+  cacheApplyPlugin,
+//  dragPlugin,
+  moduleHandlerPlugin,
+  searchPlugin,
+  searchServicePlugin,
+} from "../plugins/index";
 
 
 function genInput(h, cb = () => {}, key,defaultVal) {
@@ -26,10 +30,6 @@ function genInput(h, cb = () => {}, key,defaultVal) {
 
 export let vuexData = {
   firstInited: false, // 初次渲染已完成
-  h: ()=>{ console.log('未获取h函数');},
-  errMsg: '组件列表为空，糟糕，大概出啥子问题了，快去提issue吧~', // 错误提示信息
-  showPhanel: false,// 控制是否显示面板
-  notFirstRenderChooseBtn: false,
   beforeDestroys: [], // 销毁时事件
   targetList: [], // 当前命中列表 用于渲染
   sourceList: [],// 数据源列表 用于缓存
@@ -137,20 +137,19 @@ export let vuexData = {
       },
     ]
   },
-  tableType: 1,
+  Vue: {},
+  tableType: 1, // 当前渲染表格的表格类型
   pluginMap: {
     dataPlugins: [], // 数据插件 会在当前渲染列表新增数据时执行
     layoutPlugins: [], // 布局插件，会渲染返回的dom
   } , // 实现插件机制
   options: {}, // ignoreModules  不需要处理模块
 }
-let h; // 用于存储$createElement函数
 window.vuexData = vuexData;
 // 装载插件 入口函数 main
 function importPlugin(Vue,_options){  
   vuexData.options = _options;
   
-  h = vuexData.h;
   eachObj(vuexData.options, (key, val) => {
     Object.defineProperty(vuexData, key, {
       get(){
@@ -161,29 +160,17 @@ function importPlugin(Vue,_options){
       }
     })
   })
-  Vue,
-  // debugger
-  console.log( vuexData.options);
+  vuexData.Vue = Vue;
+  // 初始化数据
   initService(vuexData.serviceMap);
   addPlugin('cache-apply-plugin',cacheApplyPlugin)
   addPlugin('module-handler-plugin',moduleHandlerPlugin)
   addPlugin('cache-plugin',cachePlugin)
   addPlugin('search-service-plugin',searchServicePlugin)
   addPlugin('search-plugin',searchPlugin)
-  // addPlugin(dragPlugin)
   observe();
+  // 利用路由守卫 置空当前数据 但不能改变地址值指向 不然会导致observe方法的切片失败导致插件机制失败
   let vuexDebugPluginMixin = {
-    beforeRouteEnter (to, from, next) {
-      next(function (vm) {
-        if(vm._uid) vuexData.h = vm.$createElement
-        // 包裹一层 从而只执行一遍
-        nextTickForImmediately(
-          function initEnter() {
-            
-          }
-        )
-      });
-    },
     beforeRouteLeave(to, from, next){
       // 包裹一层 从而只执行一遍
       nextTickForImmediately(
@@ -193,18 +180,10 @@ function importPlugin(Vue,_options){
         }
       )
       next()
-    },
-    beforeDestroy(){
-     
     }
   }
   Vue.mixin(vuexDebugPluginMixin)
 }
-Object.defineProperty(vuexData, 'tableColumns', {
-  get(){
-    return vuexData.tableColumnsMap[vuexData.tableType];
-  }
-})
 
 /**
  * 不需要处理的type
@@ -287,39 +266,6 @@ function observe() {
       let r = oldArrayProtoMethods.push.apply(this,[newObj])
     }
   };
-}
-/**
- * 插件机制
- * @param {*} pluginWrap 插件默认为一个返回函数的函数 外层函数会默认执行 并在执行时被传递vuexData；
- */
-function addPlugin(pluginName,pluginWrap =() => {}) {
-  // console.log(1,pluginName, pluginWrap);
-  if (typeCheck('Function')(pluginWrap)) {
-    // console.log(2,  pluginWrap);
-    let plugin = pluginWrap(vuexData);
-    if (typeCheck('Function')(plugin)) {
-      // console.log(3, plugin);
-      vuexData.pluginMap.dataPlugins.push(plugin);
-      // 记录插件名称
-      vuexData.pluginMap[pluginName] = {
-        type: 0,
-        plugin
-      }
-    }else if (typeCheck('Object')(plugin) && plugin.type === '1') {
-      // console.log(4, plugin);
-      if (typeCheck('Function')(plugin.handler)) {
-        vuexData.pluginMap.layoutPlugins.push(plugin.handler)
-        vuexData.pluginMap[pluginName] = {
-          type: 1,
-          plugin: plugin.handler
-        }
-      }
-   
-    }else {
-      console.error('未支持的插件类型');
-    }
-    // console.log(5, vuexData.pluginMap);
-  }
 }
 
 export function mapCache(moduleName,type) {

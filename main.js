@@ -4,6 +4,7 @@ import vmPluginFn from './src/vmPlugin';
 import {callFn} from './util/index.js';
 import vuexDebugPlugin from './src/vuex-debug-plugin/index';
 
+let _Vue;
 
 // 用户传过来的配置项
 export default  function pluginWrapper(options) {
@@ -12,7 +13,7 @@ export default  function pluginWrapper(options) {
     isMapp,
     isDev
   } = options;
-  let _Vue;
+ 
   function initPlugin() {
      // 如果是子应用 则加载子应用的插件
      if(isMapp){

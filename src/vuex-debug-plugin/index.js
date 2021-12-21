@@ -1,6 +1,5 @@
 import {typeCheck, compareObj, getStateByType, getActionByType} from './util/index';
 import importPlugin, { vuexData, mapCache, noNeedResolve } from './libs/import';
-import { generateLayoutContentForVuex } from './libs/render';
 function pluginFn(options){
     let h; // 用于存储$createElement函数
     let {
@@ -115,7 +114,3 @@ export default pluginFn
 
 
 
-export let vuexDebugPannelPlugin = {
-  title: 'vuex',
-  render: generateLayoutContentForVuex
-}

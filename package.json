@@ -1,6 +1,6 @@
 {
   "name": "vue-debug-plugin",
-  "version": "1.3.9",
+  "version": "1.4.0",
   "description": "实时监测vue实例的状态，挂载在window.$vm上，支持快速切换组件，支持微前端",
   "main": "./dist/bundle.js",
   "scripts": {
