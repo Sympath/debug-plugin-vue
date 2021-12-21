@@ -1,4 +1,4 @@
-import { callFn, deWeight, eachObj, getVal, isVueComp, nextTick, nextTickForImmediately, nextTickForSetTime, reTry, setActive, tf, typeCheck } from "../../util";
+import { callFn, deWeight, eachObj, getVal, isVueComp, nextTick, nextTickForImmediately, nextTickForSetTime, reTry, setActive, tf, typeCheck } from "../../util/index";
 
 
 let getMappWinodow; // 用户传来的配置项
@@ -547,10 +547,15 @@ function importPlugin(Vue,options){
       ignoreCompsPrefix: [],
       msgboxWidth: 800,
       msgboxHeight: 500,
-      filterDepends: false
+      filterDepends: false,
+      plugins: []
     }
     eachObj(defaultMap, (key, val) => {
       if(typeof obj[key] !== typeof defaultMap[key]){
+        // console.error(`请注意${key}传参的类型不一致`)
+      }
+      if(obj[key] == null){
+        // console.error(`请注意${key}传参的类型不一致`)
         obj[key] = defaultMap[key]
       }
     })

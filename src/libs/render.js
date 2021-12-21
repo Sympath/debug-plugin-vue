@@ -1,4 +1,4 @@
-import { eachObj, getFilePathByVm, getMethodsByVm, getVal, isVueComp, nextTickFoDelay, tf, typeCheck } from "../../util";
+import { eachObj, getFilePathByVm, getMethodsByVm, getVal, isVueComp, nextTickFoDelay, tf, typeCheck } from "../../util/index";
 import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
 import { data, renderData } from "./import";
 import { elDialogDrag } from "./drag";
@@ -9,6 +9,7 @@ import renderInfoPanelPlugin from "../plugins/infoShowPanel";
 import renderDataHandlerPanelPlugin from "../plugins/dataHandlerPanel";
 import renderMethodExecPanelPlugin from "../plugins/methodExecPanel";
 import renderLogPanelPlugin from "../plugins/renderLogPanel";
+import vuexDebugPannelPlugin from "../plugins/vuexDebugPannel";
 
 let Vue;
 let h; // 用于存储$createElement函数
@@ -32,8 +33,8 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
     let boxClass = 'el-message-box';
     setStyle({
         [`${customClass}`]: {
-            width: `${msgboxWidth}px!important`,
-            height: `${msgboxHeight}px!important;`,
+            width: typeof msgboxWidth === Number ? `${msgboxWidth}px!important` : `${msgboxWidth}!important`,
+            height:  typeof msgboxHeight === Number ? `${msgboxHeight}px!important` : `${msgboxHeight}!important`,
             position: 'absolute',
             left: `${left}px`,
             top: `${top}px`,
@@ -223,30 +224,50 @@ function _renderChoosePhanelForElement(){
      * @returns 
      */
     function generateLayoutContent() { 
+        console.log('====',data.opts.plugins);
         let plugins = [
             renderInfoPanelPlugin,
             renderDataHandlerPanelPlugin,
             renderMethodExecPanelPlugin,
-            renderLogPanelPlugin
+            renderLogPanelPlugin,
+            vuexDebugPannelPlugin,
+            ...(data.opts.plugins)
         ]    
         let collapseItems = plugins.map(
-            (plugin, index) => ({
-                title: plugin.title,
-                name: index,
-                content: plugin.render(h, $vm, index)
-            })
+            (plugin, index) => {
+                function formatVnode(plugin) {
+                    let title = plugin.title;
+                    let name = index;
+                    let content = plugin.render(h, $vm,index);
+                   
+                    return (
+                        <el-collapse-item title={title} name={name}>
+                            {content}
+                        </el-collapse-item>
+                    )
+                }
+                let vnode = formatVnode(plugin)
+                if ( !window.collapseItemRenderObjs) {
+                    window.collapseItemRenderObjs = []
+                }
+                window.collapseItemRenderObjs.push(
+                    {
+                        render : ()=>{
+                            vnode.componentInstance.__patch__(vnode,formatVnode(plugin))
+                            formatVnode(plugin)                    },
+                        vnode: vnode
+                    }
+                )
+
+                return vnode
+                
+            }
         )
-        let items = collapseItems.map(item =>{
-            let {content, title,name} = item;
-            return (
-                <el-collapse-item title={title} name={name}>
-                    {content}
-                </el-collapse-item>)
-        })
+       
         return (
             (
                 <el-collapse>
-                   {items}
+                   {collapseItems}
                 </el-collapse>
             )
         )

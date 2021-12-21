@@ -1,4 +1,4 @@
-import { eachObj, nextTickFoDelay } from "../../util";
+import { eachObj, nextTickFoDelay } from "../../util/index";
 import { $mount, creatDom, mountToBody, remove_items } from "../libs/dom";
 
 /**

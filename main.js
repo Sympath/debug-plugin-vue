@@ -1,7 +1,9 @@
 import { notice } from './src/libs/render';
 import mappPluginFn from './src/mappPlugin';
 import vmPluginFn from './src/vmPlugin';
-import {callFn} from './util';
+import {callFn} from './util/index.js';
+import vuexDebugPlugin from './src/vuex-debug-plugin/index';
+
 
 // 用户传过来的配置项
 export default  function pluginWrapper(options) {
@@ -41,3 +43,19 @@ export default  function pluginWrapper(options) {
   
 }
 
+
+
+export function vuexDebugPluginFn(options) {
+  // 是否是微应用，如果是子应用则暴露子应用的插件
+  let {
+    isDev
+  } = options;
+  // 如果是dev环境 才继续执行
+  if(callFn(isDev,window.location)){
+    console.log(options);
+    return vuexDebugPlugin(options)
+  }else {
+    return ()=>{}
+  }
+  
+}

@@ -38,10 +38,14 @@ function inputRender(h,props) {
     })
     setTimeout(() => {
         inputDom = document.querySelector(`#search${id}`);
-        inputDom.addEventListener('input', function(e) {
-          console.log(111, e.target.value);
-            props.keyWord = e.target.value;
-        })
+        if (inputDom) {   
+          inputDom.addEventListener('input', function(e) {
+            console.log(111, e.target.value);
+              props.keyWord = e.target.value;
+          })
+        }else {
+          console.error(`el-input-dynamic 挂载dom失败 对应id为${id}`)
+        }
       }, 1000);
       return (
         <div data-v-01f94fbc="" class="el-input el-input--small el-input--suffix" style="width: 200px; position: relative;margin-left: 70px;">

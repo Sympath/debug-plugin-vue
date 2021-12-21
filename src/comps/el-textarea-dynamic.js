@@ -1,4 +1,4 @@
-import { typeCheck } from "../../util";
+import { typeCheck } from "../../util/index";
 
 function textAreaRender(h,props) {
     let {

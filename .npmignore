@@ -1,6 +1,6 @@
 src/
 main.js
-util.js
+util/
 optimaze.md
 rollup.config.js
 .github

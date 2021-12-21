@@ -1,4 +1,4 @@
-import { typeCheck } from "../../util";
+import { typeCheck } from "../../util/index";
 import completeRender from "../comps/el-complete-dynamic";
 import textAreaRender from "../comps/el-textarea-dynamic";
  /** 属性处理区：获取属性对应值 对象则会挂载在window.dataObj 上并默认打印
@@ -43,8 +43,8 @@ import textAreaRender from "../comps/el-textarea-dynamic";
                    if(queryString === 'ALL'){
                        return true
                    }else{
-                      return   key.toLowerCase().indexOf(queryString.toLowerCase()) != -1}
-                   }
+                      return   key.toLowerCase().startsWith(queryString.toLowerCase());
+                }}
             ).map(key => ({
                 value: key,
                 label: key

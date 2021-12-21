@@ -1,4 +1,4 @@
-import { getMethodsByVm } from "../../util";
+import { getMethodsByVm } from "../../util/index";
 import textAreaRender from "../comps/el-textarea-dynamic";
 
 /** 方法执行区：直接执行模板中的方法
