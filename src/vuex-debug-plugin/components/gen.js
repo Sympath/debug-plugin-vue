@@ -26,9 +26,7 @@ const componentObj = {
 
 
 function handleFormItemComponents(children,formData) {
-    console.log('handleFormItemComponents==children',children);
     function _generateFormItemComponent(opt, childrenComp) {
-        console.log('_generateFormItemComponent==opt',opt);
         let {props = {},key = '', style = {},className = ''} = opt;
         return h('el-form-item', {
             class: className,
@@ -51,7 +49,7 @@ function handleFormItemComponents(children,formData) {
                 let func = componentObj[type]
                 component = func? func(item, formData) : null
             }
-            console.log('handleFormItemComponents==component',component,formItemProps);
+
             return _generateFormItemComponent({...formItemProps,key},component)
         })
         return children
@@ -75,7 +73,6 @@ function generateForm(opt, formData = {},vm = {}) {
 }
 
 function generateInputComponent(opt, formData = {},vm = {}) {
-    console.log('generateInputComponent===opt',opt);
     let {key,props = {}, style = {} , events = [],children = []} = opt;
     children = handleChildren(children,formData);
 
@@ -99,7 +96,6 @@ function generateSwitchComponent(opt, formData = {},vm = {}){
     let {key,props = {}, style = {} , events = [],slot = ''} = opt;
     // 监听 onChange 事件进行赋值操作
     function _handleChange(e) {
-        console.log(e);
         formData[key] = e;
     }
     _handleChange = _handleChange.bind(this);
@@ -112,7 +108,6 @@ function generateSwitchComponent(opt, formData = {},vm = {}){
         on: {
             ...translateEvents(events, vm),
             input(val) {
-                console.log(11);
                 if (key) {
                     formData[key] = val
                 }
@@ -141,7 +136,6 @@ function generateSelectComponent(opt, formData = {},vm = {}){
         on: {
             ...translateEvents(events, vm),
             input(val) {
-                console.log(11);
                 if (key) {
                     formData[key] = val
                 }

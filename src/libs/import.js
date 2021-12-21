@@ -10,12 +10,12 @@ function getCompName(comp) {
   let {err,result} = getVal(comp,'$options._componentTag');
   let compName;
   if(err){
-    // // console.log('获取失败',rootCompInstance,comp);
-      // compName = '获取失败'
-      let {err: compNameErr, result : compNameResult} = getVal(comp,'$el.classList.0');
-      if (!compNameErr) {
-        compName = compNameResult;
-      }
+    // // // console.log('获取失败',rootCompInstance,comp);
+    //   // compName = '获取失败'
+    //   let {err: compNameErr, result : compNameResult} = getVal(comp,'$el.classList.0');
+    //   if (!compNameErr) {
+    //     compName = compNameResult;
+    //   }
   }else {
       compName = result;
   }
@@ -128,9 +128,7 @@ export let data = {
       
       console.log('新值：' + JSON.stringify(newVal),
       '老值：' + JSON.stringify(oldVal))
-      // console.log(arguments.callee.caller.name);
-      // console.log((new Error()).stack.split("\n")[2].trim().split(" ")[1]);
-      // console.log((new Error()).stack);
+
     })
   },
   isDev: /qa.*test/.test(location.host),

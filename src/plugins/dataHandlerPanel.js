@@ -20,7 +20,7 @@ import textAreaRender from "../comps/el-textarea-dynamic";
      * @param {*} name 用户输入的属性名
      */
     let getInfoInputHandler = (name)=>{
-        console.log(vm[name]);
+
         let answer = ''
         
         if(typeCheck('Object')(vm[name])){

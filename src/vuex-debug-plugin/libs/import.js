@@ -293,12 +293,12 @@ function observe() {
  * @param {*} pluginWrap 插件默认为一个返回函数的函数 外层函数会默认执行 并在执行时被传递vuexData；
  */
 function addPlugin(pluginName,pluginWrap =() => {}) {
-  console.log(1,pluginName, pluginWrap);
+  // console.log(1,pluginName, pluginWrap);
   if (typeCheck('Function')(pluginWrap)) {
-    console.log(2,  pluginWrap);
+    // console.log(2,  pluginWrap);
     let plugin = pluginWrap(vuexData);
     if (typeCheck('Function')(plugin)) {
-      console.log(3, plugin);
+      // console.log(3, plugin);
       vuexData.pluginMap.dataPlugins.push(plugin);
       // 记录插件名称
       vuexData.pluginMap[pluginName] = {
@@ -306,7 +306,7 @@ function addPlugin(pluginName,pluginWrap =() => {}) {
         plugin
       }
     }else if (typeCheck('Object')(plugin) && plugin.type === '1') {
-      console.log(4, plugin);
+      // console.log(4, plugin);
       if (typeCheck('Function')(plugin.handler)) {
         vuexData.pluginMap.layoutPlugins.push(plugin.handler)
         vuexData.pluginMap[pluginName] = {
@@ -318,7 +318,7 @@ function addPlugin(pluginName,pluginWrap =() => {}) {
     }else {
       console.error('未支持的插件类型');
     }
-    console.log(5, vuexData.pluginMap);
+    // console.log(5, vuexData.pluginMap);
   }
 }
 

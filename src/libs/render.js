@@ -224,7 +224,7 @@ function _renderChoosePhanelForElement(){
      * @returns 
      */
     function generateLayoutContent() { 
-        console.log('====',data.opts.plugins);
+        // console.log('====',data.opts.plugins);
         let plugins = [
             renderInfoPanelPlugin,
             renderDataHandlerPanelPlugin,
@@ -355,7 +355,7 @@ function _renderChoosePhanelForElement(){
          */
         function checkHandler(nodeData) {
             let {label,id,vm} = nodeData;
-            console.log(nodeData);
+            // console.log(nodeData);
             window.$vm = vm;
             treeNode.componentInstance.setCheckedKeys([id]);
         }

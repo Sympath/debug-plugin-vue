@@ -13,7 +13,6 @@ export default  function pluginWrapper(options) {
     isDev
   } = options;
   let _Vue;
-  console.log(1111);
   function initPlugin() {
      // 如果是子应用 则加载子应用的插件
      if(isMapp){
@@ -52,7 +51,6 @@ export function vuexDebugPluginFn(options) {
   } = options;
   // 如果是dev环境 才继续执行
   if(callFn(isDev,window.location)){
-    console.log(options);
     return vuexDebugPlugin(options)
   }else {
     return ()=>{}

@@ -40,7 +40,7 @@ function inputRender(h,props) {
         inputDom = document.querySelector(`#search${id}`);
         if (inputDom) {   
           inputDom.addEventListener('input', function(e) {
-            console.log(111, e.target.value);
+            // console.log(111, e.target.value);
               props.keyWord = e.target.value;
           })
         }else {

@@ -140,7 +140,7 @@ export function removeMask() {
     isOne : false
   },(dom)=>{
     if(getVal(dom,'parentNode.style.position').err){
-      console.log(getVal(dom,'parentNode.style.position').errKey);
+      // console.log(getVal(dom,'parentNode.style.position').errKey);
     }
     else {
       dom.parentNode.style.position = dom._parentPosition
