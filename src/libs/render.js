@@ -266,7 +266,7 @@ function _renderChoosePhanelForElement(){
        
         return (
             (
-                <el-collapse>
+                <el-collapse accordion>
                    {collapseItems}
                 </el-collapse>
             )

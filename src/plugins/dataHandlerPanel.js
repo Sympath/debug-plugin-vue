@@ -67,7 +67,7 @@ import textAreaRender from "../comps/el-textarea-dynamic";
         querySearch
     }
     return (<div>
-        <h1 style="text-align: center">
+        <h1 style="text-align: center;margin-bottom: 10px">
             请输入属性名：{completeRender(h,getCompleteInfoInputProps)}
         </h1>
         {textAreaRender(h,

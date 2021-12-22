@@ -135,7 +135,7 @@ function autocompleteRender(h,props) {
               // nextTickFoDelay(closeSuggest)
             }}
             value={props.keyWord} id={`autocomplete${id}`} 
-            type="text" autocomplete="off" valuekey="value" placeholder="请输入内容" debounce="300" placement="bottom-start" popperappendtobody="true" class="el-input__inner" role="textbox" aria-autocomplete="list" aria-controls="id" aria-activedescendant="el-autocomplete-1108-item--1"/>
+            type="text" autocomplete="off" valuekey="value" placeholder={placeholder ?`${placeholder}` : '请输入内容'} debounce="300" placement="bottom-start" popperappendtobody="true" class="el-input__inner" role="textbox" aria-autocomplete="list" aria-controls="id" aria-activedescendant="el-autocomplete-1108-item--1"/>
           {iconType ? <span class="el-input__suffix">
                 <span class="el-input__suffix-inner">
                     <i

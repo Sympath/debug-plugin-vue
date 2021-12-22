@@ -24,10 +24,11 @@ function renderInfoPanel(h, vm) {
     let infos = [{
         label: '对应文件路径',
         value: getFilePathByVm(vm)
-    }, {
-        label: '组件方法名',
-        value: getMethodsByVm(vm).join(',')
     }]
+    // , {
+    //     label: '组件方法名',
+    //     value: getMethodsByVm(vm).join(',')
+    // }
     let content = infos.map(info => {
         let {label, value} = info
         return (
