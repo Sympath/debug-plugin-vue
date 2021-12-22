@@ -114,7 +114,8 @@ function autocompleteRender(h,props) {
         <div data-v-e2e56c92="" aria-haspopup="listbox" role="combobox" aria-owns="el-autocomplete-1108" 
         
         class="el-autocomplete inline-input" aria-expanded="true"><div class="el-input">
-          <input onFocus={()=>{
+          <input onClick={()=>{
+              console.log(111);
               querySearch('ALL', handleFilterData)
             }} 
             onBlur={() => {
@@ -124,6 +125,8 @@ function autocompleteRender(h,props) {
                     if(e.target.closest("#el-autocomplete")|| e.target.closest(`#autocomplete${id}`)) 
                       {
                       } else {
+                        console.log(222);
+
                         //点击非当前元素，需要执行的代码
                         renderData.showSuggest = false;
                       }

@@ -8,28 +8,13 @@ import completeRender from "../comps/el-complete-dynamic";
  * @returns 
  */
 function renderMethodExecPanel(h, vm) {
-/** 格式为 【label：】value  slot 行结构
- * 
- * @param {*} label 
- * @param {*} value 
- * @param {*} slot 
- * @returns 
- */
-function row(label, value, slot) {
-    return (<p>
-        <b>{label}：</b>
-        <span>{value}</span>
-        {slot}
-    </p>)
-    }
-
     let textAreaMethodProps = {
         id: 1,
         rows:2,
         placeholder:"可以输入vue格式的methods"
     }
     // 执行方法
-    let execBtn = (<el-button onClick={()=>{
+    let execBtn = (<el-button style="margin-left: 10px" onClick={()=>{
         let regex = /(?<methodName>\w+)\((?<paramsStr>.*)\)/
         let {
             methodName,
@@ -37,11 +22,11 @@ function row(label, value, slot) {
         } = regex.exec(textAreaMethodProps.keyWord).groups;
         let params = paramsStr.split(',');
         let newParamsStr = paramsStr;
-        if(window.vm[params[0]]){
+        if(vm[params[0]]){
             newParamsStr = params.map(param=>`this.${param}`).join(',');
         }
         let func = new Function( `this.${methodName}(${newParamsStr})`);
-        func.call(window.vm)
+        func.call(vm)
             }}>执行方法</el-button>)
              /**
      * icon点击事件
