@@ -15,6 +15,7 @@ import { $mount, creatDom, mountToBody, remove_items } from "../libs/dom";
  * @returns 
  */
 function autocompleteRender(h,props) {
+    let bandClearEvented = false;
     let renderData = {
       suggests: [] // 建议列表
     }
@@ -32,7 +33,7 @@ function autocompleteRender(h,props) {
     function suggestRender(){
       let suggestRender = ()=>{
         if (renderData.showSuggest) {
-          remove_items('#el-autocomplete',{
+          remove_items(`#autocomplete${id}-panel`,{
             removeSelf: true
           })
            // 点击当前元素处理操作
@@ -51,7 +52,7 @@ function autocompleteRender(h,props) {
           </li>)
           ): <li>暂无属性</li>
           let sugestVnode = (<div 
-            id="el-autocomplete" 
+            id={`autocomplete${id}-panel`} 
             role="region" class="el-autocomplete-suggestion el-popper" style="position: absolute; top: 40px;  transform-origin: center top; z-index: 2004; width: 178px;" x-placement="bottom-start"><div class="el-scrollbar"><div class="el-autocomplete-suggestion__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
             <ul class="el-scrollbar__view el-autocomplete-suggestion__list" role="listbox" id="el-autocomplete-1108">
               {liVnode}
@@ -59,7 +60,7 @@ function autocompleteRender(h,props) {
           </div><div class="el-scrollbar__bar is-horizontal"><div class="el-scrollbar__thumb" style="transform: translateX(0%);"></div></div><div class="el-scrollbar__bar is-vertical"><div class="el-scrollbar__thumb" style="transform: translateY(0%);"></div></div></div><div x-arrow="" class="popper__arrow" style="left: 35px;"></div></div>)
           $mount(inputDom.parentNode,creatDom(sugestVnode))
         }else {
-          remove_items('#el-autocomplete',{
+          remove_items(`#autocomplete${id}-panel`,{
             removeSelf: true
           })
         }
@@ -75,6 +76,7 @@ function autocompleteRender(h,props) {
         placeholder,
         querySearch
     } = props;
+    props.renderData = renderData;
     let iconType;
     let iconClickHandler;
     let inputDom;
@@ -118,32 +120,33 @@ function autocompleteRender(h,props) {
               console.log(111);
               querySearch('ALL', handleFilterData)
             }} 
-            onBlur={() => {
-              // 失去焦点时判断点击区域是否在suggest区域，不在则关闭suggest浮窗
-              document.querySelector('.vm-msgbox').addEventListener('click', function(e){
-                //  || e.target.closest(`#autocomplete${id}`)
-                    if(e.target.closest("#el-autocomplete")|| e.target.closest(`#autocomplete${id}`)) 
-                      {
-                      } else {
-                        console.log(222);
-
-                        //点击非当前元素，需要执行的代码
-                        renderData.showSuggest = false;
-                      }
-                    }, {passive: true}
-                  )
-              let closeSuggest = ()=>{
-                renderData.showSuggest = false;
-              }
-              // nextTickFoDelay(closeSuggest)
-            }}
+            // onBlur={() => {
+            //   if (!bandClearEvented) {
+            //     bandClearEvented = true;
+            //     // 失去焦点时判断点击区域是否在suggest区域，不在则关闭suggest浮窗
+            //     document.querySelector('.vm-msgbox').addEventListener('click', function(e){
+            //       //  || e.target.closest(`#autocomplete${id}`)
+            //           if(e.target.closest(`#autocomplete${id}-panel`)|| e.target.closest(`#autocomplete${id}`)) 
+            //             {
+            //             } else {
+            //               console.log(222);
+            //               //点击非当前元素，需要执行的代码
+            //               renderData.showSuggest = false;
+            //             }
+            //           }, {passive: true}
+            //         )
+            //   }
+            // }}
             value={props.keyWord} id={`autocomplete${id}`} 
             type="text" autocomplete="off" valuekey="value" placeholder={placeholder ?`${placeholder}` : '请输入内容'} debounce="300" placement="bottom-start" popperappendtobody="true" class="el-input__inner" role="textbox" aria-autocomplete="list" aria-controls="id" aria-activedescendant="el-autocomplete-1108-item--1"/>
           {iconType ? <span class="el-input__suffix">
                 <span class="el-input__suffix-inner">
                     <i
                       onClick={
-                        ()=>{iconClickHandler(props.keyWord)}
+                        ()=>{
+                          renderData.showSuggest = false;
+                          iconClickHandler(props.keyWord)
+                        }
                       }  
                       data-v-01f94fbc="" class={`el-icon-${iconType} el-input__icon`}></i>
                 </span>

@@ -15,6 +15,7 @@ function renderMethodExecPanel(h, vm) {
     }
     // 执行方法
     let execBtn = (<el-button style="margin-left: 10px" onClick={()=>{
+        // textAreaMethodProps.renderData && (textAreaMethodProps.renderData.showSuggest = false)
         let regex = /(?<methodName>\w+)\((?<paramsStr>.*)\)/
         let {
             methodName,
