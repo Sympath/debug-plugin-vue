@@ -24,7 +24,10 @@ export default function searchPlugin(vuexData) {
           if (keyword === 'all') {
             isChoosed = true;
           }
-          if((val).startsWith(keyword)){
+          // if((val).startsWith(keyword)){
+          //   isChoosed = true;
+          // }
+          if (val.indexOf(keyword) > -1) {
             isChoosed = true;
           }
         })
