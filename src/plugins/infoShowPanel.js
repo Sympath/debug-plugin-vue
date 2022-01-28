@@ -1,4 +1,4 @@
-import { getFilePathByVm, getMethodsByVm } from "../../util/index"
+import { getFilePathByVm, getMethodsByVm, launchEditor } from "../../util/index"
 
 
 

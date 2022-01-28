@@ -325,3 +325,65 @@ export function insertScript(src){
   script.src= src;
   head.appendChild(script);
 }
+
+
+export const EDITORS = {
+  sublime: 'subl://open?url=file://{path}&line={line}&column={column}',
+  textmate: 'txmt://open?url=file://{path}&line={line}&column={column}',
+  emacs: 'emacs://open?url=file://{path}&line={line}&column={column}',
+  macvim: 'mvim://open/?url=file://{path}&line={line}&column={column}',
+  phpstorm: 'phpstorm://open?file={path}&line={line}&column={column}',
+  webstorm: 'webstorm://open?file={path}&line={line}&column={column}',
+  idea: 'idea://open?file={path}&line={line}&column={column}',
+  vscode: 'vscode://file/{path}{:line}{:column}',
+  'vscode-insiders': 'vscode-insiders://file/{path}:{line}:{column}',
+  atom: 'atom://core/open/file?filename={path}&line={line}&column={column}',
+};
+
+
+
+export function launchEditor({
+  editor,
+  srcPath,
+  line,
+  column,
+}) {
+  let url = (EDITORS[editor]).replace(
+    /{(.*?)}/g,
+    (_$, $1) => {
+      console.log($1);
+      if ($1 === 'path') {
+        return srcPath;
+      }
+      if ($1 === ':line') {
+        if (line) {
+          return `:${String(line)}`;
+        }else {
+          return ''
+        }
+      }
+      if ($1 === ':column') {
+        if (column) {
+          return `:${String(column)}`;
+        }else {
+          return ''
+        }
+      }
+    },
+  );
+  // console.log(url);
+  window.open(url)
+}
+
+/**
+ * 为 url 做字符串拼接，覆盖重复的query
+ * @param {String} url
+ * @param {Object} query
+ */
+ export function assignQuery (url = '', query = {}) {
+  let uri = new URI(url)
+  Object.keys(query).forEach(key => {
+    if (uri.hasQuery(key)) uri.removeQuery(key)
+  })
+  return uri.addQuery(query).toString()
+}

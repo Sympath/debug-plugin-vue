@@ -1,4 +1,4 @@
-import { eachObj, getFilePathByVm, getMethodsByVm, getVal, isVueComp, nextTickFoDelay, tf, typeCheck } from "../../util/index";
+import { eachObj, getFilePathByVm, getMethodsByVm, getVal, isVueComp, launchEditor, nextTickFoDelay, tf, typeCheck } from "../../util/index";
 import { $mount, creatDom, hover, mountToBody, removeMask, remove_items, setMask, setStyle } from "./dom";
 import { data, renderData } from "./import";
 import { elDialogDrag } from "./drag";
@@ -215,8 +215,23 @@ function _renderChoosePhanelForElement(){
                 type: 'search'
             }
         }
+        let launchEditorBtn = (<el-button style="margin-left: 20px;" onClick = {()=>{
+            let {editor, projectRootDir} = data;
+            if (editor && projectRootDir) {
+                launchEditor({
+                    editor,
+                    srcPath: `${projectRootDir}/${getFilePathByVm(window.$vm)}`
+                })
+            }else {
+                notice('未配置当前项目根路径或者编辑器类型')
+            }
+                 }}>唤起ide</el-button>)
+        
         return (
-            inputRender(h,searchProps)
+            <div>
+                {inputRender(h,searchProps)}
+                {launchEditorBtn}
+            </div>
         )
     }
     /**内容区域
