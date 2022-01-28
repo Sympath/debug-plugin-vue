@@ -216,14 +216,16 @@ function _renderChoosePhanelForElement(){
             }
         }
         let launchEditorBtn = (<el-button style="margin-left: 20px;" onClick = {()=>{
-            let {editor, projectRootDir} = data;
-            if (editor && projectRootDir) {
+            let {editor, projectRootDir, isMapp, mappProjectRootDir} = data;
+            let rootDir = isMapp ? mappProjectRootDir: projectRootDir;
+            let noticeInfo = isMapp ? '未配置微应用项目根路径或者编辑器类型' : '未配置当前项目根路径或者编辑器类型'
+            if (editor && rootDir) {
                 launchEditor({
                     editor,
-                    srcPath: `${projectRootDir}/${getFilePathByVm(window.$vm)}`
+                    srcPath: `${rootDir}/${getFilePathByVm(window.$vm)}`
                 })
             }else {
-                notice('未配置当前项目根路径或者编辑器类型')
+                notice(noticeInfo)
             }
                  }}>唤起ide</el-button>)
         
