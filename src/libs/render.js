@@ -111,7 +111,9 @@ function renderVmDebugPlugin(_Vue,_hasElementUI) {
         },
         set(newVal){
             renderData.$vm = newVal;
-            nextTickFoDelay(contentRender)
+            if (typeCheck('Function')(contentRender)) {
+                nextTickFoDelay(contentRender)
+            }
         }
     })
    
