@@ -141,7 +141,16 @@ Vue.use(vueDebugPlugin);
 ```js
 import vueDebugPluginFn from 'vue-debug-plugin';
 import { isDevForBoth, isLocal } from './utils/tools';
-const vueDebugPlugin = vueDebugPluginFn({
+// 支持传递配置对象，对象属性及默认值如下
+const vueDebugPlugin = vueDebugPluginFn();
+```
+
+
+
+### 属性查阅表
+配置对象默认值
+```js
+{
   msgboxWidth: '',
   msgboxHeight: 356,
   ignoreCompsPrefix: ['el'], // 忽略的组件前缀
@@ -151,13 +160,8 @@ const vueDebugPlugin = vueDebugPluginFn({
   isDev: isDevForBoth,
   hasElementUI: true // 项目是否接入了elementUi
   // isMapp: true 如果是子应用 需要设置为true  无微应用可以忽略
-});
+}
 ```
-
-
-
-### 属性查阅表
-
 ##### 配置对象属性
 
 | 配置项            | 类型                | 作用                                                         | 是否必填 | 默认值 |

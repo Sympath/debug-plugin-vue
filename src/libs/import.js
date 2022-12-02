@@ -526,38 +526,54 @@ export function emitInitVmDebuPlugin(cb){
 
 // 装载插件 入口函数 main
 function importPlugin(Vue,options){  
-  data.opts = options;
+  let defaultConf = {
+    getMappWinodow(){},
+    ignoreComps: ['tableBody', 'tableHeader', 'vitIcon', 'transition'],
+    ignoreCompsPrefix: ['el'],
+    msgboxWidth: 800,
+    msgboxHeight: 600,
+    filterDepends: false,
+    plugins: [],
+    hasElementUI: true, // 项目是否接入了elementUi
+    isDev: function () {
+      return /test|:\d+/g.test(location.host)
+    }, // 判断非线上环境的逻辑 默认含有test或端口号为非线上环境
+    filterDepends: function () {
+      return /:\d+/g.test(location.host)
+    }, // 是否展示未查询到文件地址的组件，是本地就过滤 是测试环境或线上就打开 默认看有没有端口号
+  }
+  data.opts = Object.assign(defaultConf, options);
   eachObj(data.opts, (key, val) => {
     Object.defineProperty(data, key, {
       get(){
-        return data.opts[key]
+        return val
       },
       set(newVal){
         data.opts[key] = newVal;
       }
     })
   })
-  setDeFaultVal(data.opts)
-  function setDeFaultVal(obj){
-    let defaultMap = {
-      getMappWinodow(){},
-      ignoreComps: [],
-      ignoreCompsPrefix: [],
-      msgboxWidth: 800,
-      msgboxHeight: 500,
-      filterDepends: false,
-      plugins: []
-    }
-    eachObj(defaultMap, (key, val) => {
-      if(typeof obj[key] !== typeof defaultMap[key]){
-        // console.error(`请注意${key}传参的类型不一致`)
-      }
-      if(obj[key] == null){
-        // console.error(`请注意${key}传参的类型不一致`)
-        obj[key] = defaultMap[key]
-      }
-    })
-  }
+  // setDeFaultVal(data.opts)
+  // function setDeFaultVal(obj){
+  //   let defaultMap = {
+  //     getMappWinodow(){},
+  //     ignoreComps: [],
+  //     ignoreCompsPrefix: [],
+  //     msgboxWidth: 800,
+  //     msgboxHeight: 600,
+  //     filterDepends: false,
+  //     plugins: []
+  //   }
+  //   eachObj(defaultMap, (key, val) => {
+  //     if(typeof obj[key] !== typeof defaultMap[key]){
+  //       // console.error(`请注意${key}传参的类型不一致`)
+  //     }
+  //     if(obj[key] == null){
+  //       // console.error(`请注意${key}传参的类型不一致`)
+  //       obj[key] = defaultMap[key]
+  //     }
+  //   })
+  // }
   let {
     getMappWinodow, // 获取子应用全局变量的函数 如果无返回值正常渲染即可
     mappPanelKey // 定义在微应用的主应用中控制面板d_name的值
