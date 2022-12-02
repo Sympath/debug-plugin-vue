@@ -10,6 +10,6 @@ fi
 git add .
 git commit -m "$1"
 git push
-# 更新
+# 更新包 minor major
 npm version patch
 npm publish
