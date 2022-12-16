@@ -5,9 +5,8 @@ import {callFn} from './util/index.js';
 import vuexDebugPlugin from './src/vuex-debug-plugin/index';
 
 let _Vue;
-
 // 用户传过来的配置项
-export default  function pluginWrapper(options) {
+export default function pluginWrapper(options) {
   // 是否是微应用，如果是子应用则暴露子应用的插件
   let {
     isMapp,

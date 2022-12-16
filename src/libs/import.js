@@ -37,9 +37,9 @@ function noNeedResolveComp(comp){
   let noNeedResolve = false; // 默认需要处理
   let compName = getCompName(comp);
   let ignoreComps = []; // 需忽略的组件
-  ignoreComps.push(...data.ignoreComps);
+  ignoreComps.push(...(data.ignoreComps || []));
   let ignoreCompsPrefix = ['getNameFail']; // 需忽略的组件前缀
-  ignoreCompsPrefix.push(...data.ignoreCompsPrefix)
+  ignoreCompsPrefix.push(...(data.ignoreCompsPrefix || []))
   if(ignoreComps.some(comp => comp === compName)) noNeedResolve = true
   if(ignoreCompsPrefix.some(comp => compName.startsWith(comp))) noNeedResolve = true
 
@@ -49,7 +49,8 @@ function noNeedResolveComp(comp){
   // }
   // 如果文件路径是packages说明是第三方包 则不处理
   if(getVal(comp,'$options.__file').result.startsWith('packages/')) noNeedResolve = true
-  if (getVal(comp,'$options.__file').err && data.filterDepends) {
+  let filterDepends = data.filterDepends()
+  if (getVal(comp,'$options.__file').err && filterDepends) {
     noNeedResolve = true
   }
   // if(data.isDev || getVal(comp,'$options.__file').result.startsWith('src/')){
@@ -131,7 +132,6 @@ export let data = {
 
     })
   },
-  isDev: /qa.*test/.test(location.host),
   opts: {},// 用户传来的配置项
   pluginKey : 'vm',
 }
@@ -526,13 +526,13 @@ export function emitInitVmDebuPlugin(cb){
 
 // 装载插件 入口函数 main
 function importPlugin(Vue,options){  
+  debugger
   let defaultConf = {
     getMappWinodow(){},
     ignoreComps: ['tableBody', 'tableHeader', 'vitIcon', 'transition'],
     ignoreCompsPrefix: ['el'],
     msgboxWidth: 800,
     msgboxHeight: 600,
-    filterDepends: false,
     plugins: [],
     hasElementUI: true, // 项目是否接入了elementUi
     isDev: function () {
@@ -542,7 +542,7 @@ function importPlugin(Vue,options){
       return /:\d+/g.test(location.host)
     }, // 是否展示未查询到文件地址的组件，是本地就过滤 是测试环境或线上就打开 默认看有没有端口号
   }
-  data.opts = Object.assign(defaultConf, options);
+  options = data.opts = Object.assign(defaultConf, options);
   eachObj(data.opts, (key, val) => {
     Object.defineProperty(data, key, {
       get(){
@@ -662,6 +662,7 @@ function importPlugin(Vue,options){
     }
   }
   Vue.mixin(vmDebugPluginMixin)
+  return data
 }
 
 export default importPlugin
