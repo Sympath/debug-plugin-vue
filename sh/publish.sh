@@ -6,6 +6,7 @@ if [[ -z "${1}" ]]; then
     echo "请输入本次修改commit信息"
     exit 1
 fi
+npm run build
 # 进行git仓库的上传
 git add .
 git commit -m "$1"
